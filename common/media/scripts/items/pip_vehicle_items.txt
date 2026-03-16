@@ -14,40 +14,29 @@
  * \________________________________________________________________________/
  */
 
-VERSION = 1,
-
-option PIP.EnableDebugLogging
+module PhobosIndustrialPathology
 {
-	type = boolean, default = false,
-	page = PIP_Sandbox, translation = PIP_EnableDebugLogging,
-}
+    item PortableLabFridge
+    {
+        Type = Normal,
+        Weight = 6.0,
+        DisplayName = Portable Lab Fridge,
+        DisplayCategory = VehicleMaintenance,
+        Icon = PIP_PortableLabFridge,
+        MechanicsItem = true,
+        ConditionMax = 100,
+        Tooltip = Tooltip_PIP_PortableLabFridge,
+    }
 
-option PIP.EnableProximityAutopsy
-{
-	type = boolean, default = true,
-	page = PIP_Sandbox, translation = PIP_EnableProximityAutopsy,
-}
-
-option PIP.AutopsyTableRange
-{
-	type = integer, default = 3, min = 1, max = 6,
-	page = PIP_Sandbox, translation = PIP_AutopsyTableRange,
-}
-
-option PIP.EnableVehicleAppliances
-{
-	type = boolean, default = true,
-	page = PIP_Sandbox, translation = PIP_EnableVehicleAppliances,
-}
-
-option PIP.FridgeBatteryDrainRate
-{
-	type = double, default = 0.0003, min = 0.0, max = 0.01,
-	page = PIP_Sandbox, translation = PIP_FridgeBatteryDrainRate,
-}
-
-option PIP.MicrowaveBatteryDrainRate
-{
-	type = double, default = 0.001, min = 0.0, max = 0.05,
-	page = PIP_Sandbox, translation = PIP_MicrowaveBatteryDrainRate,
+    item PortableLabMicrowave
+    {
+        Type = Normal,
+        Weight = 5.0,
+        DisplayName = Portable Lab Microwave,
+        DisplayCategory = VehicleMaintenance,
+        Icon = PIP_PortableLabMicrowave,
+        MechanicsItem = true,
+        ConditionMax = 100,
+        Tooltip = Tooltip_PIP_PortableLabMicrowave,
+    }
 }

@@ -32,6 +32,7 @@ ignore = {
 globals = {
     "PIP_Sandbox",
     "PIP_Autopsy",
+    "PIP_Vehicle",
 }
 
 read_globals = {
@@ -49,14 +50,20 @@ read_globals = {
     "ISInventoryPage",
     "ISInventoryPaneContextMenu",
     "ISWorldObjectContextMenu",
+    "ISLootWindowContainerControls",
 
     -- PZ globals not in JavaDocs (must stay manual)
     "Events",
     "ArrayList",
     "ProceduralDistributions",
     "SuburbsDistributions",
+    "Vehicles",
     "VehicleDistributions",
+    "VehicleUtils",
     "forageSystem",
+    "sendClientCommand",
+    "getVehicleById",
+    "getScriptManager",
     "luautils",
 
     -- Cross-mod (optional, runtime-guarded)
