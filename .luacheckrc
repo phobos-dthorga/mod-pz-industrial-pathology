@@ -49,6 +49,7 @@ read_globals = {
     "ISContextMenu",
     "ISInventoryPage",
     "ISInventoryPaneContextMenu",
+    "ISToolTip",
     "ISWorldObjectContextMenu",
     "ISLootWindowContainerControls",
 
@@ -72,6 +73,7 @@ read_globals = {
     -- ZVV (Zombie Virus Vaccine) — optional, runtime-guarded
     "morgueTable",
     "LabActionMakeAutopsy",
+    "LabModEngine",
     "LabRecipes_GetBedObjects",
     "LabRecipes_CreateCorpseAutopsyTooltip",
     "LabRecipes_WMOnCorpseAutopsy",
