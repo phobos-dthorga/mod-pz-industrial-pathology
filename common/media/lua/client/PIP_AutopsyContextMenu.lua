@@ -20,17 +20,20 @@
 --
 -- When the player right-clicks near a ZVV morgue table AND
 -- corpses are nearby, adds "Autopsy (Lab Table)" options.
--- Options always show when conditions are partially met,
--- with red/green indicators for unmet/met requirements
--- (matching vanilla B42 UX patterns).
+-- Also supports RV Bridge: if no local table is found but the
+-- player is near an RV with a morgue table inside, offers
+-- "Autopsy (RV Lab Table)" with remote relay to ZVV.
 --
 -- Depends on: PhobosLib, PIP_AutopsyProxy, PIP_SandboxIntegration,
+--             PIP_RVBridge, PIP_TimedActionRemoteAutopsy,
 --             ZVV (LabActionMakeAutopsy, morgueTable, LabRecipes_*)
 ---------------------------------------------------------------
 
 require "PhobosLib"
 require "PIP_AutopsyProxy"
 require "PIP_SandboxIntegration"
+require "PIP_RVBridge"
+require "PIP_TimedActionRemoteAutopsy"
 
 
 ---------------------------------------------------------------
@@ -104,7 +107,7 @@ end
 
 
 ---------------------------------------------------------------
--- Corpse highlighting callback
+-- Corpse highlighting callback (reused by both paths)
 ---------------------------------------------------------------
 
 local function makeHighlightCallback()
@@ -133,10 +136,11 @@ end
 ---@param corpse any            IsoDeadBody
 ---@param corpseSq any          IsoGridSquare
 ---@param inv any               ItemContainer
----@param tableStatus string    Table status key (Empty, Corpse, Remains, Dirty)
+---@param tableStatus string    Table status key (Empty, Corpse, Remains, Dirty, NotAvailable)
 ---@param tableNotReady boolean Whether the table is NOT ready for autopsy
----@param tableResult table     {top, bottom, status} from findNearbyMorgueTable
-local function addCorpseOption(subMenu, player, corpse, corpseSq, inv, tableStatus, tableNotReady, tableResult)
+---@param actionTarget any      Either {top, bottom, ...} or remoteTableData
+---@param isRemote boolean      true for RV bridge path
+local function addCorpseOption(subMenu, player, corpse, corpseSq, inv, tableStatus, tableNotReady, actionTarget, isRemote)
     local zombie = isZombieSafe(corpse)
     local skeleton = isSkeletonSafe(corpse)
     local age = PhobosLib.getCorpseAge(corpse)
@@ -146,12 +150,26 @@ local function addCorpseOption(subMenu, player, corpse, corpseSq, inv, tableStat
     local md = PhobosLib.getModData(corpse)
     local notOrgans = md and (md.Autopsy == true) or false
 
-    -- Proximity: use ZVV's callback directly
-    local opt = subMenu:addOption(
-        getText("ContextMenu_LabCorpse"),
-        player, LabRecipes_WMOnCorpseAutopsy,
-        corpse, corpseSq, tableResult.top, tableResult.bottom
-    )
+    local opt
+    if isRemote then
+        -- RV bridge: queue PIP's custom timed action
+        local remoteTableData = actionTarget
+        opt = subMenu:addOption(
+            getText("ContextMenu_LabCorpse"),
+            player, function(plr)
+                ISTimedActionQueue.add(
+                    PIP_TimedActionRemoteAutopsy:new(plr, corpse, corpseSq, remoteTableData)
+                )
+            end
+        )
+    else
+        -- Proximity: use ZVV's callback directly
+        opt = subMenu:addOption(
+            getText("ContextMenu_LabCorpse"),
+            player, LabRecipes_WMOnCorpseAutopsy,
+            corpse, corpseSq, actionTarget.top, actionTarget.bottom
+        )
+    end
 
     -- Corpse highlighting on hover
     local hc, highlightFn = makeHighlightCallback()
@@ -181,7 +199,8 @@ local function addCorpseOption(subMenu, player, corpse, corpseSq, inv, tableStat
 
     PhobosLib.debug("PIP", "CorpseOption", "Added corpse option: zombie=" .. tostring(zombie)
         .. " fresh=" .. tostring(not notFresh) .. " autopsied=" .. tostring(notOrgans)
-        .. " tableReady=" .. tostring(not tableNotReady))
+        .. " tableReady=" .. tostring(not tableNotReady)
+        .. " remote=" .. tostring(isRemote))
 end
 
 
@@ -205,19 +224,63 @@ local function onFillWorldObjectContextMenu(playerNum, context, worldobjects, te
 
     local inv = player:getInventory()
 
-    -- Find nearby morgue table (proximity scan)
+    -------------------------------------------------------
+    -- Path 1: Proximity table (existing behaviour)
+    -------------------------------------------------------
     local range = PIP_Sandbox.getAutopsyTableRange()
     local tableResult = PIP_Autopsy.findNearbyMorgueTable(sq, range)
-    if not tableResult then return end
 
-    local tableNotReady = tableResult.status ~= "Empty"
-    local parent = context:addOption(getText("UI_PIP_AutopsyWithTable"), worldobjects, nil)
+    if tableResult then
+        local tableNotReady = tableResult.status ~= "Empty"
+        local parent = context:addOption(getText("UI_PIP_AutopsyWithTable"), worldobjects, nil)
+        local subMenu = ISContextMenu:getNew(context)
+        context:addSubMenu(parent, subMenu)
+
+        for _, entry in ipairs(corpseEntries) do
+            addCorpseOption(subMenu, player, entry.corpse, entry.square,
+                inv, tableResult.status, tableNotReady, tableResult, false)
+        end
+        return  -- proximity takes priority; don't show RV bridge too
+    end
+
+    -------------------------------------------------------
+    -- Path 2: RV Bridge (remote table in RV interior)
+    -------------------------------------------------------
+    if not PIP_Sandbox.isRVBridgeEnabled() then return end
+
+    local vehicleRange = PIP_Sandbox.getRVVehicleSearchRange()
+    local remoteResult, reason = PIP_Autopsy.findRemoteTableViaRV(player, vehicleRange)
+
+    if not remoteResult then
+        -- Show greyed-out option only when we KNOW there's an RV nearby
+        -- but chunk isn't loaded (discoverability)
+        if reason == "chunk_not_loaded" then
+            local parent = context:addOption(getText("UI_PIP_AutopsyWithRVTable"), worldobjects, nil)
+            parent.notAvailable = true
+            local tooltip = ISToolTip:new()
+            tooltip:initialise()
+            tooltip:setVisible(false)
+            tooltip.description = string.format(
+                "%s: <RED> %s <RGB:1,1,1> <LINE> <RED> %s",
+                getText("UI_PIP_TableStatus"),
+                getText("UI_PIP_TableStatus_NotAvailable"),
+                getText("UI_PIP_RVTableNotLoaded")
+            )
+            parent.toolTip = tooltip
+        end
+        -- For other reasons (no_rv_mod, no_rv_nearby, no_table), silently skip
+        return
+    end
+
+    -- Remote table found — build submenu
+    local tableNotReady = remoteResult.status ~= "Empty"
+    local parent = context:addOption(getText("UI_PIP_AutopsyWithRVTable"), worldobjects, nil)
     local subMenu = ISContextMenu:getNew(context)
     context:addSubMenu(parent, subMenu)
 
     for _, entry in ipairs(corpseEntries) do
         addCorpseOption(subMenu, player, entry.corpse, entry.square,
-            inv, tableResult.status, tableNotReady, tableResult)
+            inv, remoteResult.status, tableNotReady, remoteResult, true)
     end
 end
 

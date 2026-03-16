@@ -33,3 +33,15 @@ option PIP.AutopsyTableRange
 	type = integer, default = 3, min = 1, max = 6,
 	page = PIP_Sandbox, translation = PIP_AutopsyTableRange,
 }
+
+option PIP.EnableRVBridge
+{
+	type = boolean, default = true,
+	page = PIP_Sandbox, translation = PIP_EnableRVBridge,
+}
+
+option PIP.RVVehicleSearchRange
+{
+	type = integer, default = 5, min = 1, max = 10,
+	page = PIP_Sandbox, translation = PIP_RVVehicleSearchRange,
+}
