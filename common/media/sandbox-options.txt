@@ -21,3 +21,15 @@ option PIP.EnableDebugLogging
 	type = boolean, default = false,
 	page = PIP_Sandbox, translation = PIP_EnableDebugLogging,
 }
+
+option PIP.EnableProximityAutopsy
+{
+	type = boolean, default = true,
+	page = PIP_Sandbox, translation = PIP_EnableProximityAutopsy,
+}
+
+option PIP.AutopsyTableRange
+{
+	type = integer, default = 3, min = 1, max = 6,
+	page = PIP_Sandbox, translation = PIP_AutopsyTableRange,
+}

@@ -31,6 +31,7 @@ ignore = {
 -- PIP's own global namespaces
 globals = {
     "PIP_Sandbox",
+    "PIP_Autopsy",
 }
 
 read_globals = {
@@ -38,12 +39,9 @@ read_globals = {
     "PhobosLib",
 
     -- PZ Lua classes (not in JavaDocs — pure Lua, must stay manual)
-    "ISBaseTimedAction",
-    "ISButton",
-    "ISCollapsableWindow",
-    "ISModalRichText",
-    "ISRichTextPanel",
-    "ISTimedActionQueue",
+    "ISContextMenu",
+    "ISInventoryPage",
+    "ISInventoryPaneContextMenu",
     "ISWorldObjectContextMenu",
 
     -- PZ globals not in JavaDocs (must stay manual)
@@ -53,6 +51,8 @@ read_globals = {
     "SuburbsDistributions",
     "VehicleDistributions",
     "forageSystem",
+    "sendClientCommand",
+    "getVehicleById",
     "luautils",
 
     -- Cross-mod (optional, runtime-guarded)
@@ -60,6 +60,16 @@ read_globals = {
     "ZScienceSkill",
     "PCP_Sandbox",
     "PCP_PuritySystem",
+
+    -- ZVV (Zombie Virus Vaccine) — optional, runtime-guarded
+    "morgueTable",
+    "LabActionMakeAutopsy",
+    "LabRecipes_GetBedObjects",
+    "LabRecipes_CreateCorpseAutopsyTooltip",
+    "LabRecipes_WMOnCorpseAutopsy",
+    "LabSandboxOptions",
+
+    -- (ModData is in auto-generated PZ globals below)
 
     -- Auto-generated from PZJavaDocs lua_api.json (1646 entries)
     -- Regenerate: extract globals + exposed classes from lua_api.json

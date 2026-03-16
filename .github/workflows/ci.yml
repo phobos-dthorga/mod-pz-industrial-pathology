@@ -33,37 +33,31 @@ jobs:
       - name: Luacheck
         run: luacheck common/media/lua/
 
-      - name: Version consistency (3 locations)
+      - name: Version consistency (2 locations)
         run: |
           V_ROOT=$(grep -oP 'modversion=\K[0-9]+\.[0-9]+\.[0-9]+' mod.info)
-          V_4214=$(grep -oP 'modversion=\K[0-9]+\.[0-9]+\.[0-9]+' 42.14/mod.info)
-          V_4215=$(grep -oP 'modversion=\K[0-9]+\.[0-9]+\.[0-9]+' 42.15/mod.info)
+          V_42=$(grep -oP 'modversion=\K[0-9]+\.[0-9]+\.[0-9]+' 42/mod.info)
 
-          echo "mod.info (root)       = $V_ROOT"
-          echo "42.14/mod.info        = $V_4214"
-          echo "42.15/mod.info        = $V_4215"
+          echo "mod.info (root)  = $V_ROOT"
+          echo "42/mod.info      = $V_42"
 
           FAIL=0
-          if [ "$V_ROOT" != "$V_4214" ]; then
-            echo "::error::Version mismatch: mod.info=$V_ROOT vs 42.14/mod.info=$V_4214"
-            FAIL=1
-          fi
-          if [ "$V_ROOT" != "$V_4215" ]; then
-            echo "::error::Version mismatch: mod.info=$V_ROOT vs 42.15/mod.info=$V_4215"
+          if [ "$V_ROOT" != "$V_42" ]; then
+            echo "::error::Version mismatch: mod.info=$V_ROOT vs 42/mod.info=$V_42"
             FAIL=1
           fi
           if [ "$FAIL" = "0" ]; then
-            echo "All 3 version locations match: $V_ROOT"
+            echo "All 2 version locations match: $V_ROOT"
           fi
           exit $FAIL
 
-      - name: Sandbox translation completeness (JSON - 42.15)
+      - name: Sandbox translation completeness (JSON)
         run: |
           python3 <<'PYEOF'
           import re, sys, os
 
           opts_file = "common/media/sandbox-options.txt"
-          trans_file = "42.15/media/lua/shared/Translate/EN/Sandbox.json"
+          trans_file = "42/media/lua/shared/Translate/EN/Sandbox.json"
 
           if not os.path.isfile(opts_file) or not os.path.isfile(trans_file):
               print("No sandbox options or translations yet — skipping.")
@@ -109,62 +103,7 @@ jobs:
 
           if fail:
               sys.exit(1)
-          print("All sandbox translation keys present in JSON (42.15).")
-          PYEOF
-
-      - name: Sandbox translation completeness (Lua - 42.14)
-        run: |
-          python3 <<'PYEOF'
-          import re, sys, os
-
-          opts_file = "common/media/sandbox-options.txt"
-          trans_file = "42.14/media/lua/shared/Translate/EN/Sandbox_EN.txt"
-
-          if not os.path.isfile(opts_file) or not os.path.isfile(trans_file):
-              print("No sandbox options or translations yet — skipping.")
-              sys.exit(0)
-
-          with open(opts_file) as f:
-              opts_text = f.read()
-
-          with open(trans_file) as f:
-              trans_text = f.read()
-
-          fail = False
-
-          option_blocks = re.split(r'\n\s*(?=option\s)', opts_text)
-          for block in option_blocks:
-              trans_match = re.search(r'translation\s*=\s*(\w+)', block)
-              if not trans_match:
-                  continue
-              key = trans_match.group(1)
-              label_key = f"Sandbox_{key}"
-              tooltip_key = f"Sandbox_{key}_tooltip"
-              if label_key not in trans_text:
-                  print(f"::error::Missing Lua translation key: {label_key}")
-                  fail = True
-              if tooltip_key not in trans_text:
-                  print(f"::error::Missing Lua translation key: {tooltip_key}")
-                  fail = True
-
-              num_match = re.search(r'numValues\s*=\s*(\d+)', block)
-              if num_match:
-                  num_values = int(num_match.group(1))
-                  for i in range(1, num_values + 1):
-                      option_key = f"Sandbox_{key}_option{i}"
-                      if option_key not in trans_text:
-                          print(f"::error::Missing Lua enum translation key: {option_key}")
-                          fail = True
-
-          for m in re.finditer(r'page\s*=\s*(\w+)', opts_text):
-              page_key = f"Sandbox_{m.group(1)}"
-              if page_key not in trans_text:
-                  print(f"::error::Missing Lua page title key: {page_key}")
-                  fail = True
-
-          if fail:
-              sys.exit(1)
-          print("All sandbox translation keys present in Lua (42.14).")
+          print("All sandbox translation keys present in JSON.")
           PYEOF
 
       - name: Icon coverage
@@ -271,16 +210,16 @@ jobs:
 
           print(f"Found {len(recipe_names)} recipes, {len(item_names)} items in scripts")
 
-          # --- Check 42.15 JSON translations ---
-          recipes_json_file = "42.15/media/lua/shared/Translate/EN/Recipes.json"
-          items_json_file = "42.15/media/lua/shared/Translate/EN/ItemName.json"
+          # --- Check JSON translations ---
+          recipes_json_file = "42/media/lua/shared/Translate/EN/Recipes.json"
+          items_json_file = "42/media/lua/shared/Translate/EN/ItemName.json"
 
           if os.path.isfile(recipes_json_file):
               with open(recipes_json_file) as f:
                   recipes_json = json.load(f)
               for name in sorted(recipe_names):
                   if name not in recipes_json:
-                      print(f"::error::42.15 Recipes.json missing key: {name}")
+                      print(f"::error::Recipes.json missing key: {name}")
                       fail = True
 
           if os.path.isfile(items_json_file):
@@ -289,45 +228,23 @@ jobs:
               for name in sorted(item_names):
                   qualified = f"{MODULE}.{name}"
                   if qualified not in items_json:
-                      print(f"::error::42.15 ItemName.json missing key: {qualified}")
-                      fail = True
-
-          # --- Check 42.14 Lua translations ---
-          recipes_lua_file = "42.14/media/lua/shared/Translate/EN/Recipes_EN.txt"
-          items_lua_file = "42.14/media/lua/shared/Translate/EN/ItemName_EN.txt"
-
-          if os.path.isfile(recipes_lua_file):
-              with open(recipes_lua_file) as f:
-                  recipes_lua = f.read()
-              for name in sorted(recipe_names):
-                  prefixed = f"Recipe_{name}"
-                  if prefixed not in recipes_lua:
-                      print(f"::error::42.14 Recipes_EN.txt missing key: {prefixed}")
-                      fail = True
-
-          if os.path.isfile(items_lua_file):
-              with open(items_lua_file) as f:
-                  items_lua = f.read()
-              for name in sorted(item_names):
-                  prefixed = f"ItemName_{MODULE}.{name}"
-                  if prefixed not in items_lua:
-                      print(f"::error::42.14 ItemName_EN.txt missing key: {prefixed}")
+                      print(f"::error::ItemName.json missing key: {qualified}")
                       fail = True
 
           if fail:
               sys.exit(1)
-          print("All recipe/item translation keys present in both formats.")
+          print("All recipe/item translation keys present.")
           PYEOF
 
-      - name: Translation key prefix guard (42.15 JSON)
+      - name: Translation key prefix guard (JSON)
         run: |
           python3 <<'PYEOF'
           import json, sys, os
 
           fail = False
           checks = [
-              ("42.15/media/lua/shared/Translate/EN/Recipes.json", "Recipe_"),
-              ("42.15/media/lua/shared/Translate/EN/ItemName.json", "ItemName_"),
+              ("42/media/lua/shared/Translate/EN/Recipes.json", "Recipe_"),
+              ("42/media/lua/shared/Translate/EN/ItemName.json", "ItemName_"),
           ]
           for fname, prefix in checks:
               if not os.path.isfile(fname):
@@ -344,13 +261,13 @@ jobs:
 
           if fail:
               sys.exit(1)
-          print("No invalid prefixes found in 42.15 JSON translation files.")
+          print("No invalid prefixes found in JSON translation files.")
           PYEOF
 
       - name: Encoding check (UTF-8)
         run: |
           FAIL=0
-          for dir in common/media 42.14/media 42.15/media; do
+          for dir in common/media 42/media; do
             if [ -d "$dir" ]; then
               while IFS= read -r -d '' f; do
                 if ! python3 -c "open('$f', encoding='utf-8').read()" 2>/dev/null; then
