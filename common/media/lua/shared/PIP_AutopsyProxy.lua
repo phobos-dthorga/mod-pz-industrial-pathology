@@ -133,18 +133,21 @@ end
 
 
 ---------------------------------------------------------------
--- Remote table scanning (RV Bridge)
+-- Remote table scanning (RV Bridge) — cache-first approach
 ---------------------------------------------------------------
 
 require "PIP_RVBridge"
 
---- Find a morgue table inside an RV interior by scanning the room's
---- coordinates. Returns table data with isRemote=true and the
---- table top's world coordinates for ZVV relay.
+--- Find a morgue table inside an RV interior. Uses a cache-first
+--- strategy: the OnTick scanner in PIP_RVBridge caches table
+--- coordinates while the player is inside the RV. When outside,
+--- the cached data is used (since the remote chunks are unloaded).
+---
+--- Falls back to live scanning if the chunk happens to be loaded.
 ---@param player any     IsoPlayer
 ---@param vehicleRadius number  How close player must be to the RV
----@return table|nil  {top, bottom, status, isRemote, remoteTopX, remoteTopY, remoteTopZ, rvData} or nil
----@return string|nil  reason code if failed: "no_rv_mod", "no_rv_nearby", "chunk_not_loaded", "no_table"
+---@return table|nil  {status, isRemote, remoteTopX, remoteTopY, remoteTopZ, rvData} or nil
+---@return string|nil  reason code if failed: "no_zvv", "no_rv_mod", "no_rv_nearby", "no_table"
 function PIP_Autopsy.findRemoteTableViaRV(player, vehicleRadius)
     if not PIP_Autopsy.isZVVCompatible() then return nil, "no_zvv" end
     if not PIP_RVBridge.isAvailable() then return nil, "no_rv_mod" end
@@ -152,52 +155,70 @@ function PIP_Autopsy.findRemoteTableViaRV(player, vehicleRadius)
     local rvData = PIP_RVBridge.findNearbyRVWithRoom(player, vehicleRadius)
     if not rvData then return nil, "no_rv_nearby" end
 
+    -- Strategy 1: Check persistent cache (populated by OnTick scanner inside RV)
+    local cached = PIP_RVBridge.getCachedTableLocation(player, rvData.vehicleId)
+    if cached and cached.topX and cached.topY and cached.topZ then
+        PhobosLib.debug("PIP", "RVTableScan", "Using cached table at "
+            .. cached.topX .. "," .. cached.topY .. " status=" .. tostring(cached.status))
+        return {
+            status      = cached.status or "Empty",
+            isRemote    = true,
+            remoteTopX  = cached.topX,
+            remoteTopY  = cached.topY,
+            remoteTopZ  = cached.topZ,
+            rvData      = rvData,
+        }, nil
+    end
+
+    -- Strategy 2: Live scan (works if chunk is loaded, e.g. just exited RV)
     local roomSq = PIP_RVBridge.getRoomSquare(rvData.room)
-    if not roomSq then return nil, "chunk_not_loaded" end
+    if roomSq then
+        local scanRadius = 8
+        local best = nil
+        local bestDist = math.huge
+        local roomX, roomY = rvData.room.x, rvData.room.y
 
-    -- Scan a small area around the room entry point for a morgue table
-    local scanRadius = 8  -- rooms can be up to ~12 tiles; 8 covers most layouts
-    local best = nil
-    local bestDist = math.huge
-    local roomX, roomY = rvData.room.x, rvData.room.y
-
-    PhobosLib.scanNearbySquares(roomSq, scanRadius, function(sq)
-        local result = scanSquareForMorgueTable(sq)
-        if result then
-            local sok, sx = PhobosLib.pcallMethod(sq, "getX")
-            local sok2, sy = PhobosLib.pcallMethod(sq, "getY")
-            if sok and sok2 then
-                local dist = (sx - roomX) ^ 2 + (sy - roomY) ^ 2
-                if dist < bestDist then
-                    -- Get top piece coordinates for ZVV relay
-                    local topSq = result.top and result.top:getSquare()
-                    local topX = topSq and topSq:getX()
-                    local topY = topSq and topSq:getY()
-                    local topZ = topSq and topSq:getZ()
-                    if topX and topY and topZ then
-                        best = {
-                            top         = result.top,
-                            bottom      = result.bottom,
-                            status      = result.status,
-                            isRemote    = true,
-                            remoteTopX  = topX,
-                            remoteTopY  = topY,
-                            remoteTopZ  = topZ,
-                            rvData      = rvData,
-                        }
-                        bestDist = dist
+        PhobosLib.scanNearbySquares(roomSq, scanRadius, function(sq)
+            local result = scanSquareForMorgueTable(sq)
+            if result then
+                local sok, sx = PhobosLib.pcallMethod(sq, "getX")
+                local sok2, sy = PhobosLib.pcallMethod(sq, "getY")
+                if sok and sok2 then
+                    local dist = (sx - roomX) ^ 2 + (sy - roomY) ^ 2
+                    if dist < bestDist then
+                        local topSq = result.top and result.top:getSquare()
+                        local topX = topSq and topSq:getX()
+                        local topY = topSq and topSq:getY()
+                        local topZ = topSq and topSq:getZ()
+                        if topX and topY and topZ then
+                            best = {
+                                status      = result.status,
+                                isRemote    = true,
+                                remoteTopX  = topX,
+                                remoteTopY  = topY,
+                                remoteTopZ  = topZ,
+                                rvData      = rvData,
+                            }
+                            bestDist = dist
+                        end
                     end
                 end
             end
-        end
-        return false
-    end)
+            return false
+        end)
 
-    if best then
-        PhobosLib.debug("PIP", "RVTableScan", "Found remote morgue table in RV (status="
-            .. best.status .. " at " .. best.remoteTopX .. "," .. best.remoteTopY .. ")")
-        return best, nil
+        if best then
+            -- Cache for future use
+            PIP_RVBridge.cacheTableLocation(player, rvData.vehicleId, {
+                topX = best.remoteTopX, topY = best.remoteTopY, topZ = best.remoteTopZ,
+                status = best.status,
+            })
+            PhobosLib.debug("PIP", "RVTableScan", "Live-scanned table in RV (status="
+                .. best.status .. " at " .. best.remoteTopX .. "," .. best.remoteTopY .. ")")
+            return best, nil
+        end
     end
 
+    -- Neither cache nor live scan found a table
     return nil, "no_table"
 end

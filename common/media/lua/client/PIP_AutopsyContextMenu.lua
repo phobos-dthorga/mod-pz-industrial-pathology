@@ -252,9 +252,9 @@ local function onFillWorldObjectContextMenu(playerNum, context, worldobjects, te
     local remoteResult, reason = PIP_Autopsy.findRemoteTableViaRV(player, vehicleRange)
 
     if not remoteResult then
-        -- Show greyed-out option only when we KNOW there's an RV nearby
-        -- but chunk isn't loaded (discoverability)
-        if reason == "chunk_not_loaded" then
+        -- Show greyed-out option when player IS near an RV but no table
+        -- was ever cached (discoverability — tells player what to do)
+        if reason == "no_table" then
             local parent = context:addOption(getText("UI_PIP_AutopsyWithRVTable"), worldobjects, nil)
             parent.notAvailable = true
             local tooltip = ISToolTip:new()
@@ -264,11 +264,11 @@ local function onFillWorldObjectContextMenu(playerNum, context, worldobjects, te
                 "%s: <RED> %s <RGB:1,1,1> <LINE> <RED> %s",
                 getText("UI_PIP_TableStatus"),
                 getText("UI_PIP_TableStatus_NotAvailable"),
-                getText("UI_PIP_RVTableNotLoaded")
+                getText("UI_PIP_RVNoTable")
             )
             parent.toolTip = tooltip
         end
-        -- For other reasons (no_rv_mod, no_rv_nearby, no_table), silently skip
+        -- For other reasons (no_rv_mod, no_rv_nearby), silently skip
         return
     end
 

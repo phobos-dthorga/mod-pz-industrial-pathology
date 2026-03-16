@@ -16,11 +16,12 @@
 
 ---------------------------------------------------------------
 -- PIP_RVBridge.lua
--- Shared logic for detecting RV Interior Expansion rooms and
--- resolving their world coordinates for remote table access.
+-- Shared logic for detecting RV Interior Expansion rooms,
+-- resolving their world coordinates, and caching morgue table
+-- locations for remote autopsy access.
 --
 -- Depends on: PhobosLib (isModActive, findNearbyVehicles,
---             getGridSquareAt, getModData)
+--             getGridSquareAt, getModData, getPlayerModDataTable)
 -- Soft dep:   PROJECTRVInterior42 / RVInteriorExpansion
 ---------------------------------------------------------------
 
@@ -32,9 +33,24 @@ PIP_RVBridge = PIP_RVBridge or {}
 local RV_CORE_MOD_ID = "PROJECTRVInterior42"
 local RV_MODDATA_KEY = "modPROJECTRVInterior"
 
+--- Player modData key for cached morgue table locations.
+PIP_RVBridge._CACHE_KEY = "PIP_RVMorgueTableCache"
+
+--- Boundary check: RV interior coordinates are at x > 22500, y > 12000.
+local RV_INTERIOR_MIN_X = 22500
+local RV_INTERIOR_MIN_Y = 12000
+
+--- Tick interval for interior scanning (~1 second at 60 ticks/sec).
+local SCAN_INTERVAL_TICKS = 60
+
 local _availableChecked = false
 local _availableResult  = false
+local _scanTicker = 0
 
+
+---------------------------------------------------------------
+-- Availability check
+---------------------------------------------------------------
 
 --- Check whether the PROJECT RV Interior core mod is active.
 --- Result is cached after first call.
@@ -49,6 +65,10 @@ function PIP_RVBridge.isAvailable()
     return _availableResult
 end
 
+
+---------------------------------------------------------------
+-- Room lookup
+---------------------------------------------------------------
 
 --- Look up the assigned room for a vehicle from the RV mod's world ModData.
 ---@param vehicle any  BaseVehicle
@@ -118,3 +138,133 @@ function PIP_RVBridge.getRoomSquare(room)
     if not room or not room.x or not room.y then return nil end
     return PhobosLib.getGridSquareAt(room.x, room.y, room.z or 0)
 end
+
+
+---------------------------------------------------------------
+-- Morgue table cache (persisted in player modData)
+---------------------------------------------------------------
+
+--- Store a morgue table's location in the player's modData cache.
+---@param player any       IsoPlayer
+---@param vehicleId string RV vehicle unique ID
+---@param tableData table  {topX, topY, topZ, status}
+function PIP_RVBridge.cacheTableLocation(player, vehicleId, tableData)
+    if not player or not vehicleId or not tableData then return end
+    local cache = PhobosLib.getPlayerModDataTable(player, PIP_RVBridge._CACHE_KEY)
+    if not cache then return end
+    cache[vehicleId] = {
+        topX   = tableData.topX,
+        topY   = tableData.topY,
+        topZ   = tableData.topZ,
+        status = tableData.status,
+    }
+    PhobosLib.debug("PIP", "RVCache", "Cached table for vehicle " .. vehicleId
+        .. " at " .. tostring(tableData.topX) .. "," .. tostring(tableData.topY)
+        .. " status=" .. tostring(tableData.status))
+end
+
+
+--- Read a cached morgue table location for a specific vehicle.
+---@param player any       IsoPlayer
+---@param vehicleId string RV vehicle unique ID
+---@return table|nil       {topX, topY, topZ, status} or nil
+function PIP_RVBridge.getCachedTableLocation(player, vehicleId)
+    if not player or not vehicleId then return nil end
+    local cache = PhobosLib.getPlayerModDataTable(player, PIP_RVBridge._CACHE_KEY)
+    if not cache then return nil end
+    return cache[vehicleId]
+end
+
+
+--- Clear the cached morgue table entry for a vehicle (e.g. table removed).
+---@param player any       IsoPlayer
+---@param vehicleId string RV vehicle unique ID
+function PIP_RVBridge.clearCacheForVehicle(player, vehicleId)
+    if not player or not vehicleId then return end
+    local cache = PhobosLib.getPlayerModDataTable(player, PIP_RVBridge._CACHE_KEY)
+    if not cache then return end
+    if cache[vehicleId] then
+        cache[vehicleId] = nil
+        PhobosLib.debug("PIP", "RVCache", "Cleared cache for vehicle " .. vehicleId)
+    end
+end
+
+
+---------------------------------------------------------------
+-- Interior scanner (runs while player is inside RV)
+---------------------------------------------------------------
+
+--- Resolve which vehicle the player is currently inside.
+--- Reads from RV mod's Players table in world ModData.
+---@param player any  IsoPlayer
+---@return string|nil vehicleId
+local function getCurrentRVVehicleId(player)
+    local pmd = PhobosLib.getModData(player)
+    if not pmd or not pmd.projectRV_playerId then return nil end
+
+    local playerId = tostring(pmd.projectRV_playerId)
+    local modData = ModData.getOrCreate(RV_MODDATA_KEY)
+    if not modData or not modData.Players then return nil end
+
+    local playerEntry = modData.Players[playerId]
+    if not playerEntry or not playerEntry.VehicleId then return nil end
+    return tostring(playerEntry.VehicleId)
+end
+
+
+--- Check if a player is currently inside an RV interior.
+---@param player any  IsoPlayer
+---@return boolean
+local function isInsideRVInterior(player)
+    if not player then return false end
+    local ok, px = PhobosLib.pcallMethod(player, "getX")
+    local ok2, py = PhobosLib.pcallMethod(player, "getY")
+    if not (ok and ok2) then return false end
+    return px > RV_INTERIOR_MIN_X and py > RV_INTERIOR_MIN_Y
+end
+
+
+--- OnTick handler: when inside RV, scan for morgue tables and update cache.
+--- Uses PIP_Autopsy.findNearbyMorgueTable() which requires ZVV globals.
+local function onTick()
+    _scanTicker = _scanTicker + 1
+    if _scanTicker < SCAN_INTERVAL_TICKS then return end
+    _scanTicker = 0
+
+    if not PIP_RVBridge.isAvailable() then return end
+
+    local player = getSpecificPlayer(0)
+    if not player then return end
+    if not isInsideRVInterior(player) then return end
+
+    -- Resolve which vehicle this player is in
+    local vehicleId = getCurrentRVVehicleId(player)
+    if not vehicleId then return end
+
+    -- Need PIP_Autopsy to be loaded (it's a shared module, loaded before client)
+    if not PIP_Autopsy or not PIP_Autopsy.findNearbyMorgueTable then return end
+
+    local playerSq = player:getSquare()
+    if not playerSq then return end
+
+    -- Scan nearby (RV rooms are small, 8 tiles covers most layouts)
+    local tableResult = PIP_Autopsy.findNearbyMorgueTable(playerSq, 8)
+
+    if tableResult then
+        -- Get the top piece's world coordinates
+        local topSq = tableResult.top and tableResult.top:getSquare()
+        if topSq then
+            PIP_RVBridge.cacheTableLocation(player, vehicleId, {
+                topX   = topSq:getX(),
+                topY   = topSq:getY(),
+                topZ   = topSq:getZ(),
+                status = tableResult.status,
+            })
+        end
+    else
+        -- No table found — clear stale cache
+        PIP_RVBridge.clearCacheForVehicle(player, vehicleId)
+    end
+end
+
+Events.OnTick.Add(onTick)

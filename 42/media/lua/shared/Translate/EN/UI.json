@@ -9,5 +9,5 @@
     "UI_PIP_TableStatus_Dirty": "Needs Cleaning",
     "UI_PIP_AutopsyWithRVTable": "Autopsy (RV Lab Table)",
     "UI_PIP_TableStatus_NotAvailable": "Not Available",
-    "UI_PIP_RVTableNotLoaded": "RV interior not loaded. Enter and exit your RV first."
+    "UI_PIP_RVNoTable": "No autopsy table detected in RV. Place one and enter the RV to register it."
 }
