@@ -81,19 +81,23 @@ local function injectApplianceParts()
     end
 
     local pipTemplate = scriptManager:getVehicle(TEMPLATE_NAME)
+    print("[PIP] getVehicle('" .. TEMPLATE_NAME .. "') = " .. tostring(pipTemplate))
     if not pipTemplate then
-        PhobosLib.debug("PIP", "VehicleInject", "ERROR: Template '" .. TEMPLATE_NAME .. "' not found")
+        print("[PIP] ERROR: Template not found. Aborting injection.")
         return
     end
 
     local allScripts = scriptManager:getAllVehicleScripts()
     if not allScripts then
-        PhobosLib.debug("PIP", "VehicleInject", "ERROR: getAllVehicleScripts() returned nil")
+        print("[PIP] ERROR: getAllVehicleScripts() returned nil")
         return
     end
 
+    print("[PIP] Total vehicle scripts found: " .. allScripts:size())
+
     local injected = 0
     local skipped = 0
+    local failed = 0
 
     for i = 0, allScripts:size() - 1 do
         local script = allScripts:get(i)
@@ -113,28 +117,32 @@ local function injectApplianceParts()
             end
 
             if not shouldSkip then
-                -- Attempt injection via copyPartsFrom
+                local partsBefore = script:getPartCount()
+
+                -- Attempt injection via copyPartsFrom (spec = part ID only, no "part/" prefix)
                 local ok, err = pcall(function()
-                    script:copyPartsFrom(pipTemplate, "part/PIPLabFridge")
-                    script:copyPartsFrom(pipTemplate, "part/PIPLabMicrowave")
+                    script:copyPartsFrom(pipTemplate, "PIPLabFridge")
+                    script:copyPartsFrom(pipTemplate, "PIPLabMicrowave")
                 end)
+
+                local partsAfter = script:getPartCount()
 
                 if ok then
                     injected = injected + 1
+                    -- Log first few vehicles for diagnostics
+                    if injected <= 3 then
+                        print("[PIP] Injected into '" .. scriptName .. "': parts " .. partsBefore .. " -> " .. partsAfter)
+                    end
                 else
-                    PhobosLib.debug("PIP", "VehicleInject",
-                        "WARN: copyPartsFrom failed for " .. scriptName .. ": " .. tostring(err))
+                    failed = failed + 1
+                    print("[PIP] WARN: copyPartsFrom failed for " .. scriptName .. ": " .. tostring(err))
                 end
             end
         end
     end
 
-    PhobosLib.debug("PIP", "VehicleInject",
-        "Injection complete: " .. injected .. " vehicles patched, " .. skipped .. " trailers skipped")
-
-    -- Always log to console regardless of debug setting (Phase 0 validation)
-    print("[PIP] Vehicle appliance injection: " .. injected .. " vehicles patched, "
-        .. skipped .. " trailers skipped")
+    print("[PIP] Injection complete: " .. injected .. " patched, "
+        .. skipped .. " trailers skipped, " .. failed .. " failed")
 end
 
 Events.OnGameBoot.Add(injectApplianceParts)
