@@ -31,7 +31,7 @@ ignore = {
 -- PIP's own global namespaces
 globals = {
     "PIP_Sandbox",
-    "PIP_RV",
+    "PIP_Autopsy",
 }
 
 read_globals = {
@@ -45,6 +45,9 @@ read_globals = {
     "ISModalRichText",
     "ISRichTextPanel",
     "ISTimedActionQueue",
+    "ISContextMenu",
+    "ISInventoryPage",
+    "ISInventoryPaneContextMenu",
     "ISWorldObjectContextMenu",
 
     -- PZ globals not in JavaDocs (must stay manual)
@@ -67,6 +70,7 @@ read_globals = {
     "LabActionMakeAutopsy",
     "LabRecipes_GetBedObjects",
     "LabRecipes_CreateCorpseAutopsyTooltip",
+    "LabRecipes_WMOnCorpseAutopsy",
     "LabSandboxOptions",
 
     -- (ModData is in auto-generated PZ globals below)
