@@ -18,4 +18,8 @@ Sandbox_EN = {
 	Sandbox_PIP_Sandbox = "Phobos Pathology",
 	Sandbox_PIP_EnableDebugLogging = "ENABLE DEBUG LOGGING:",
 	Sandbox_PIP_EnableDebugLogging_tooltip = "Enables verbose debug logging for Phobos' Industrial Pathways: Pathology to the game console.<br><br> <INDENT:20>-OFF (default): Normal operation;<br> <INDENT:20>-ON: Verbose logging of all PIP internal operations.<br><br> <RGB:1,0.6,0.2> Leave OFF unless actively troubleshooting. Requires a game restart to take effect. <RGB:1,1,1>",
+	Sandbox_PIP_EnableRVAutopsyProxy = "ENABLE RV AUTOPSY TABLE PROXY:",
+	Sandbox_PIP_EnableRVAutopsyProxy_tooltip = "When enabled, allows ZVV autopsy table functionality to be used on outdoor corpses when within range of a vehicle with an RV Interior containing a registered Autopsy Table.<br><br> <INDENT:20>-ON (default): RV autopsy proxy enabled;<br> <INDENT:20>-OFF: Standard ZVV autopsy rules apply.<br><br> <RGB:1,0.6,0.2> Requires both ZVV (Zombie Virus Vaccine) and Project RV Interior to be installed. <RGB:1,1,1>",
+	Sandbox_PIP_RVAutopsyProxyRange = "RV AUTOPSY PROXY RANGE (TILES):",
+	Sandbox_PIP_RVAutopsyProxyRange_tooltip = "Maximum distance in tiles from an RV vehicle for the autopsy table proxy to activate.<br><br> <INDENT:20>Default: 3 tiles.<br> <INDENT:20>Range: 1 to 6.<br><br> <RGB:1,0.6,0.2> Player and corpse must both be within this range of the vehicle. <RGB:1,1,1>",
 }

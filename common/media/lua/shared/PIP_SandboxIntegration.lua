@@ -27,3 +27,15 @@ PIP_Sandbox = PIP_Sandbox or {}
 function PIP_Sandbox.isDebugLoggingEnabled()
     return PhobosLib.getSandboxVar("PIP", "EnableDebugLogging", false) == true
 end
+
+--- Check if RV Autopsy Table Proxy feature is enabled.
+-- @return boolean  true if enabled (default true)
+function PIP_Sandbox.isRVAutopsyProxyEnabled()
+    return PhobosLib.getSandboxVar("PIP", "EnableRVAutopsyProxy", true) == true
+end
+
+--- Get the RV autopsy proxy range in tiles.
+-- @return number  range in tiles (default 3)
+function PIP_Sandbox.getRVAutopsyProxyRange()
+    return PhobosLib.getSandboxVar("PIP", "RVAutopsyProxyRange", 3)
+end

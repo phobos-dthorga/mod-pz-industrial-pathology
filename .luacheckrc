@@ -31,6 +31,7 @@ ignore = {
 -- PIP's own global namespaces
 globals = {
     "PIP_Sandbox",
+    "PIP_RV",
 }
 
 read_globals = {
@@ -60,6 +61,15 @@ read_globals = {
     "ZScienceSkill",
     "PCP_Sandbox",
     "PCP_PuritySystem",
+
+    -- ZVV (Zombie Virus Vaccine) — optional, runtime-guarded
+    "morgueTable",
+    "LabActionMakeAutopsy",
+    "LabRecipes_GetBedObjects",
+    "LabRecipes_CreateCorpseAutopsyTooltip",
+    "LabSandboxOptions",
+
+    -- (ModData is in auto-generated PZ globals below)
 
     -- Auto-generated from PZJavaDocs lua_api.json (1646 entries)
     -- Regenerate: extract globals + exposed classes from lua_api.json

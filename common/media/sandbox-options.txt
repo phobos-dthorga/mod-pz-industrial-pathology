@@ -21,3 +21,15 @@ option PIP.EnableDebugLogging
 	type = boolean, default = false,
 	page = PIP_Sandbox, translation = PIP_EnableDebugLogging,
 }
+
+option PIP.EnableRVAutopsyProxy
+{
+	type = boolean, default = true,
+	page = PIP_Sandbox, translation = PIP_EnableRVAutopsyProxy,
+}
+
+option PIP.RVAutopsyProxyRange
+{
+	type = integer, default = 3, min = 1, max = 6,
+	page = PIP_Sandbox, translation = PIP_RVAutopsyProxyRange,
+}

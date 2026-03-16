@@ -15,4 +15,14 @@
 --
 
 UI_EN = {
+	UI_PIP_AutopsyRVTable = "Autopsy (RV Lab Table)",
+	UI_PIP_AutopsyRVTable_Tooltip = "Perform autopsy using the registered Autopsy Table inside the nearby RV.",
+	UI_PIP_RegisterProxy = "Register as Field Proxy",
+	UI_PIP_RegisterProxy_Tooltip = "Register this Autopsy Table as a field proxy for outdoor autopsies near this vehicle.",
+	UI_PIP_UnregisterProxy = "Unregister Field Proxy",
+	UI_PIP_UnregisterProxy_Tooltip = "Remove this table's field proxy registration.",
+	UI_PIP_ProxyRegistered = "Autopsy Table registered as field proxy.",
+	UI_PIP_ProxyUnregistered = "Field proxy registration removed.",
+	UI_PIP_ProxyInvalidated = "The registered Autopsy Table is no longer present. Proxy cleared.",
+	UI_PIP_RVTableInUse = "The Autopsy Table inside the RV is currently occupied.",
 }
