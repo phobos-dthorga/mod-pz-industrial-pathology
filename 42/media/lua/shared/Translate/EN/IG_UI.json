@@ -1,5 +1,9 @@
 {
     "__copyright": "Copyright (c) 2026 Phobos A. D'thorga. All rights reserved.",
     "IGUI_VehiclePartPIPLabFridge": "Portable Lab Fridge",
-    "IGUI_VehiclePartPIPLabMicrowave": "Portable Lab Microwave"
+    "IGUI_VehiclePartPIPLabFridge2": "Portable Lab Fridge",
+    "IGUI_VehiclePartPIPLabFridge3": "Portable Lab Fridge",
+    "IGUI_VehiclePartPIPLabMicrowave": "Portable Lab Microwave",
+    "IGUI_VehiclePartPIPLabMicrowave2": "Portable Lab Microwave",
+    "IGUI_VehiclePartPIPLabMicrowave3": "Portable Lab Microwave"
 }
