@@ -1,0 +1,96 @@
+/*  ________________________________________________________________________
+ * / Copyright (c) 2026 Phobos A. D'thorga                                \
+ * |                                                                        |
+ * |           /\_/\                                                         |
+ * |         =/ o o \=    Phobos' PZ Modding                                |
+ * |          (  V  )     All rights reserved.                              |
+ * |     /\  / \   / \                                                      |
+ * |    /  \/   '-'   \   This source code is part of the Phobos            |
+ * |   /  /  \  ^  /\  \  mod suite for Project Zomboid (Build 42).         |
+ * |  (__/    \_/ \/  \__)                                                  |
+ * |     |   | |  | |     Unauthorised copying, modification, or            |
+ * |     |___|_|  |_|     distribution of this file is prohibited.          |
+ * |                                                                        |
+ * \________________________________________________________________________/
+ */
+
+module Base
+{
+
+/* ==================================================================================== */
+/* ======================== VEHICLE APPLIANCE CRAFTING =================================== */
+/* ==================================================================================== */
+/*  Portable lab appliances that install into vehicle TrunkBed via the Battery template.
+    Both require welding equipment and electronics components.                              */
+
+
+/* ----- PORTABLE LAB FRIDGE ----- */
+/*  A compact refrigeration unit for preserving biological specimens in transit.
+    Can toggle between fridge and freezer modes. Drains vehicle battery.                   */
+
+    craftRecipe PIPCraftPortableLabFridge
+    {
+        time = 400,
+        category = Phobos Pathology,
+        NeedToBeLearn = true,
+
+        Tags = InHandCraft;CannotBeResearched,
+        timedAction = Making,
+        SkillRequired = Electricity:2,
+        xpAward = Electricity:25,
+        AutoLearnAll = Electricity:4,
+
+        inputs
+        {
+            item 1 [Base.BlowTorch] mode:keep flags[NoBrokenItems;MayDegrade],
+            item 1 [Base.WeldingMask] mode:keep flags[NoBrokenItems],
+            item 1 [Base.WeldingRods] mode:keep flags[NoBrokenItems;MayDegrade],
+            item 1 [Base.Screwdriver] mode:keep flags[NoBrokenItems;MayDegrade],
+            item 2 [Base.ElectronicsScrap] mode:destroy,
+            item 2 [Base.SheetMetal] mode:destroy,
+            item 4 [Base.ElectricWire] mode:destroy,
+            item 1 [Base.Amplifier] mode:destroy,
+            item 6 [Base.Screws] mode:destroy,
+        }
+        outputs
+        {
+            item 1 PhobosIndustrialPathology.PortableLabFridge,
+        }
+    }
+
+
+/* ----- PORTABLE LAB MICROWAVE ----- */
+/*  A compact microwave unit for heating specimens and samples.
+    Timer-based operation. Drains vehicle battery faster than the fridge.                   */
+
+    craftRecipe PIPCraftPortableLabMicrowave
+    {
+        time = 350,
+        category = Phobos Pathology,
+        NeedToBeLearn = true,
+
+        Tags = InHandCraft;CannotBeResearched,
+        timedAction = Making,
+        SkillRequired = Electricity:3,
+        xpAward = Electricity:30,
+        AutoLearnAll = Electricity:5,
+
+        inputs
+        {
+            item 1 [Base.BlowTorch] mode:keep flags[NoBrokenItems;MayDegrade],
+            item 1 [Base.WeldingMask] mode:keep flags[NoBrokenItems],
+            item 1 [Base.WeldingRods] mode:keep flags[NoBrokenItems;MayDegrade],
+            item 1 [Base.Screwdriver] mode:keep flags[NoBrokenItems;MayDegrade],
+            item 3 [Base.ElectronicsScrap] mode:destroy,
+            item 1 [Base.SheetMetal] mode:destroy,
+            item 3 [Base.ElectricWire] mode:destroy,
+            item 1 [Base.LightBulb] mode:destroy,
+            item 4 [Base.Screws] mode:destroy,
+        }
+        outputs
+        {
+            item 1 PhobosIndustrialPathology.PortableLabMicrowave,
+        }
+    }
+
+}
