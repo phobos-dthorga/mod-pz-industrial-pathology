@@ -6,5 +6,8 @@
     "UI_PIP_TableStatus_Empty": "Ready",
     "UI_PIP_TableStatus_Corpse": "Occupied",
     "UI_PIP_TableStatus_Remains": "Needs Cleaning",
-    "UI_PIP_TableStatus_Dirty": "Needs Cleaning"
+    "UI_PIP_TableStatus_Dirty": "Needs Cleaning",
+    "UI_PIP_AutopsyWithRVTable": "Autopsy (RV Lab Table)",
+    "UI_PIP_TableStatus_NotAvailable": "Not Available",
+    "UI_PIP_RVTableNotLoaded": "RV interior not loaded. Enter and exit your RV first."
 }

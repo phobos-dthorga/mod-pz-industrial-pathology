@@ -40,3 +40,15 @@ function PIP_Sandbox.getAutopsyTableRange()
     return PhobosLib.getSandboxVar("PIP", "AutopsyTableRange", 3)
 end
 
+--- Check if the RV Bridge autopsy feature is enabled.
+---@return boolean  true if enabled (default true)
+function PIP_Sandbox.isRVBridgeEnabled()
+    return PhobosLib.getSandboxVar("PIP", "EnableRVBridge", true) == true
+end
+
+--- Get the RV vehicle search range in tiles.
+---@return number  range in tiles (default 5)
+function PIP_Sandbox.getRVVehicleSearchRange()
+    return PhobosLib.getSandboxVar("PIP", "RVVehicleSearchRange", 5)
+end
+

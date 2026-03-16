@@ -6,5 +6,9 @@
     "Sandbox_PIP_EnableProximityAutopsy": "ENABLE PROXIMITY AUTOPSY:",
     "Sandbox_PIP_EnableProximityAutopsy_tooltip": "When enabled, adds an 'Autopsy (Lab Table)' context menu option when right-clicking near corpses within range of a ZVV Autopsy Table. Uses the table for improved autopsy results without needing to place the corpse on it first.<br><br> <INDENT:20>-ON (default): Proximity autopsy enabled;<br> <INDENT:20>-OFF: Standard ZVV autopsy rules apply.<br><br> <RGB:1,0.6,0.2> Requires ZVV (Zombie Virus Vaccine) to be installed. <RGB:1,1,1>",
     "Sandbox_PIP_AutopsyTableRange": "AUTOPSY TABLE RANGE (TILES):",
-    "Sandbox_PIP_AutopsyTableRange_tooltip": "Maximum distance in tiles to search for a nearby Autopsy Table when right-clicking.<br><br> <INDENT:20>Default: 3 tiles.<br> <INDENT:20>Range: 1 to 6.<br><br> <RGB:1,0.6,0.2> The table must be within this range of the right-click location. <RGB:1,1,1>"
+    "Sandbox_PIP_AutopsyTableRange_tooltip": "Maximum distance in tiles to search for a nearby Autopsy Table when right-clicking.<br><br> <INDENT:20>Default: 3 tiles.<br> <INDENT:20>Range: 1 to 6.<br><br> <RGB:1,0.6,0.2> The table must be within this range of the right-click location. <RGB:1,1,1>",
+    "Sandbox_PIP_EnableRVBridge": "ENABLE RV BRIDGE:",
+    "Sandbox_PIP_EnableRVBridge_tooltip": "When enabled, allows using an Autopsy Table inside an RV Interior to perform autopsies on corpses near the vehicle. Full table-quality results without placing the corpse on the table.<br><br> <INDENT:20>-ON (default): RV Bridge autopsy enabled;<br> <INDENT:20>-OFF: Only proximity autopsy available.<br><br> <RGB:1,0.6,0.2> Requires PROJECT RV Interior and Zombie Virus Vaccine to be installed. <RGB:1,1,1>",
+    "Sandbox_PIP_RVVehicleSearchRange": "RV VEHICLE SEARCH RANGE (TILES):",
+    "Sandbox_PIP_RVVehicleSearchRange_tooltip": "Maximum distance in tiles from the player to the RV vehicle for the RV Bridge autopsy feature.<br><br> <INDENT:20>Default: 5 tiles.<br> <INDENT:20>Range: 1 to 10.<br><br> <RGB:1,0.6,0.2> The RV vehicle must be within this range of the player. <RGB:1,1,1>"
 }
