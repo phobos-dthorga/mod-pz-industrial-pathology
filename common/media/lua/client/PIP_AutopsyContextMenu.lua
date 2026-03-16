@@ -33,7 +33,11 @@ require "PhobosLib"
 require "PIP_AutopsyProxy"
 require "PIP_SandboxIntegration"
 require "PIP_RVBridge"
+require "PIP_EquipmentCheck"
 require "PIP_TimedActionRemoteAutopsy"
+require "PIP_TimedActionRemoteGetRemains"
+require "PIP_TimedActionRemoteCollectPart"
+require "PIP_TimedActionRemoteClearTable"
 
 
 ---------------------------------------------------------------
@@ -205,6 +209,146 @@ end
 
 
 ---------------------------------------------------------------
+-- RV Bridge: secondary extraction menus (Remains / Dirty)
+---------------------------------------------------------------
+
+--- Body part definitions for the "Collect Body Parts" submenu.
+local BODY_PARTS = {
+    { itemType = "RANDOM_BRAIN",                      textKey = "ContextMenu_LabCollectBrain" },
+    { itemType = "LabItems.LabHumanBoneLargeWP",      textKey = "ContextMenu_LabCollectLargeBones" },
+    { itemType = "LabItems.LabHumanTeeth",             textKey = "ContextMenu_LabCollectTeeth" },
+    { itemType = "LabItems.LabHumanSkullWithBrain",    textKey = "ContextMenu_LabCollectSkull" },
+    { itemType = "LabItems.LabSmallRandomHumanBones",  textKey = "ContextMenu_LabCollectSmallBones" },
+    { itemType = "LabItems.LabRegularHumanBoneWP",     textKey = "ContextMenu_LabCollectRegularBones" },
+}
+
+--- Create a PIP tooltip with a table status header line.
+---@param tableStatus string
+---@param tableNotReady boolean
+---@return any  ISToolTip
+local function makeStatusTooltip(tableStatus, tableNotReady)
+    local tooltip = ISToolTip:new()
+    tooltip:initialise()
+    tooltip:setVisible(false)
+    tooltip.description = string.format(
+        "%s: <%s> %s <RGB:1,1,1> <LINE> ",
+        getText("UI_PIP_TableStatus"),
+        tableNotReady and "RED" or "GREEN",
+        getText("UI_PIP_TableStatus_" .. tableStatus)
+    )
+    return tooltip
+end
+
+--- Build the "Remains" state menu: Get Remains + Collect Body Parts.
+---@param context any           ISContextMenu
+---@param player any            IsoPlayer
+---@param inv any               ItemContainer
+---@param remoteResult table    From findRemoteTableViaRV
+---@param worldobjects table
+local function addRemainsMenu(context, player, inv, remoteResult, worldobjects)
+    local parent = context:addOption(getText("UI_PIP_RVLabTable"), worldobjects, nil)
+    local subMenu = ISContextMenu:getNew(context)
+    context:addSubMenu(parent, subMenu)
+
+    -- Table status tooltip on parent
+    local parentTip = makeStatusTooltip("Remains", false)
+    parent.toolTip = parentTip
+
+    -- "Get Remains" option
+    local getRemainsOk, grSack, grPlastics = PIP_EquipmentCheck.checkGetRemains(inv)
+    local grOpt = subMenu:addOption(
+        getText("UI_PIP_GetRemains"),
+        player, function(plr)
+            ISTimedActionQueue.add(
+                PIP_TimedActionRemoteGetRemains:new(plr, remoteResult)
+            )
+        end
+    )
+    local grTip = ISToolTip:new()
+    grTip:initialise()
+    grTip:setVisible(false)
+    grTip.description = getText("UI_PIP_GetRemains_Tooltip") .. " <LINE> "
+    PIP_EquipmentCheck.appendContainerTooltip(grTip, grSack, grPlastics)
+    grOpt.toolTip = grTip
+    if not getRemainsOk then grOpt.notAvailable = true end
+
+    -- "Collect Body Parts" submenu
+    local cpOk, cpScalpel, cpSaw, cpSack, cpPlastics = PIP_EquipmentCheck.checkCollectPart(inv)
+    local collectParent = subMenu:addOption(getText("UI_PIP_CollectBodyParts"), worldobjects, nil)
+    local collectSub = ISContextMenu:getNew(subMenu)
+    subMenu:addSubMenu(collectParent, collectSub)
+
+    for _, part in ipairs(BODY_PARTS) do
+        local partOpt = collectSub:addOption(
+            getText(part.textKey),
+            player, function(plr)
+                ISTimedActionQueue.add(
+                    PIP_TimedActionRemoteCollectPart:new(plr, remoteResult, part.itemType)
+                )
+            end
+        )
+        local partTip = ISToolTip:new()
+        partTip:initialise()
+        partTip:setVisible(false)
+        partTip.description = ""
+        PIP_EquipmentCheck.appendCollectPartTooltip(partTip, cpScalpel, cpSaw, cpSack, cpPlastics)
+        partOpt.toolTip = partTip
+        if not cpOk then partOpt.notAvailable = true end
+    end
+
+    PhobosLib.debug("PIP", "RVMenu", "Added Remains menu: getRemains=" .. tostring(getRemainsOk)
+        .. " collectPart=" .. tostring(cpOk))
+end
+
+--- Build the "Dirty" state menu: Clear Table.
+---@param context any           ISContextMenu
+---@param player any            IsoPlayer
+---@param inv any               ItemContainer
+---@param remoteResult table    From findRemoteTableViaRV
+---@param worldobjects table
+local function addDirtyMenu(context, player, inv, remoteResult, worldobjects)
+    local parent = context:addOption(getText("UI_PIP_RVLabTable"), worldobjects, nil)
+    local subMenu = ISContextMenu:getNew(context)
+    context:addSubMenu(parent, subMenu)
+
+    -- Table status tooltip on parent
+    local parentTip = makeStatusTooltip("Dirty", true)
+    parent.toolTip = parentTip
+
+    -- "Clear Table" option
+    local clearOk, hasBleach, hasRag = PIP_EquipmentCheck.checkClearTable(inv)
+    local clearOpt = subMenu:addOption(
+        getText("UI_PIP_ClearTable"),
+        player, function(plr)
+            ISTimedActionQueue.add(
+                PIP_TimedActionRemoteClearTable:new(plr, remoteResult)
+            )
+        end
+    )
+    local clearTip = ISToolTip:new()
+    clearTip:initialise()
+    clearTip:setVisible(false)
+    clearTip.description = getText("UI_PIP_ClearTable_Tooltip") .. " <LINE> "
+    PIP_EquipmentCheck.appendClearTableTooltip(clearTip, hasBleach, hasRag)
+    clearOpt.toolTip = clearTip
+    if not clearOk then clearOpt.notAvailable = true end
+
+    PhobosLib.debug("PIP", "RVMenu", "Added Dirty menu: clearOk=" .. tostring(clearOk))
+end
+
+--- Build a greyed-out "Corpse" (occupied) info option.
+---@param context any
+---@param worldobjects table
+local function addCorpseStateInfo(context, worldobjects)
+    local parent = context:addOption(getText("UI_PIP_RVLabTable"), worldobjects, nil)
+    parent.notAvailable = true
+    local tip = makeStatusTooltip("Corpse", true)
+    tip.description = tip.description .. getText("UI_PIP_TableStatus_Corpse_Info")
+    parent.toolTip = tip
+end
+
+
+---------------------------------------------------------------
 -- Context menu hook
 ---------------------------------------------------------------
 
@@ -218,33 +362,37 @@ local function onFillWorldObjectContextMenu(playerNum, context, worldobjects, te
     local sq = getSquareFromWorldObjects(worldobjects)
     if not sq then return end
 
+    local inv = player:getInventory()
+
     -- Find corpses in 3x3 grid around click (matches ZVV's pattern)
     local corpseEntries = PhobosLib.getCorpsesInRadius(sq, 1)
-    if #corpseEntries == 0 then return end
-
-    local inv = player:getInventory()
 
     -------------------------------------------------------
     -- Path 1: Proximity table (existing behaviour)
+    -- Requires nearby corpses to show options.
     -------------------------------------------------------
-    local range = PIP_Sandbox.getAutopsyTableRange()
-    local tableResult = PIP_Autopsy.findNearbyMorgueTable(sq, range)
+    if #corpseEntries > 0 then
+        local range = PIP_Sandbox.getAutopsyTableRange()
+        local tableResult = PIP_Autopsy.findNearbyMorgueTable(sq, range)
 
-    if tableResult then
-        local tableNotReady = tableResult.status ~= "Empty"
-        local parent = context:addOption(getText("UI_PIP_AutopsyWithTable"), worldobjects, nil)
-        local subMenu = ISContextMenu:getNew(context)
-        context:addSubMenu(parent, subMenu)
+        if tableResult then
+            local tableNotReady = tableResult.status ~= "Empty"
+            local parent = context:addOption(getText("UI_PIP_AutopsyWithTable"), worldobjects, nil)
+            local subMenu = ISContextMenu:getNew(context)
+            context:addSubMenu(parent, subMenu)
 
-        for _, entry in ipairs(corpseEntries) do
-            addCorpseOption(subMenu, player, entry.corpse, entry.square,
-                inv, tableResult.status, tableNotReady, tableResult, false)
+            for _, entry in ipairs(corpseEntries) do
+                addCorpseOption(subMenu, player, entry.corpse, entry.square,
+                    inv, tableResult.status, tableNotReady, tableResult, false)
+            end
+            return  -- proximity takes priority; don't show RV bridge too
         end
-        return  -- proximity takes priority; don't show RV bridge too
     end
 
     -------------------------------------------------------
     -- Path 2: RV Bridge (remote table in RV interior)
+    -- Shows menus based on cached table state.
+    -- Remains/Dirty states don't require nearby corpses.
     -------------------------------------------------------
     if not PIP_Sandbox.isRVBridgeEnabled() then return end
 
@@ -255,8 +403,8 @@ local function onFillWorldObjectContextMenu(playerNum, context, worldobjects, te
         -- Show greyed-out option when player IS near an RV but no table
         -- was ever cached (discoverability — tells player what to do)
         if reason == "no_table" then
-            local parent = context:addOption(getText("UI_PIP_AutopsyWithRVTable"), worldobjects, nil)
-            parent.notAvailable = true
+            local noTableParent = context:addOption(getText("UI_PIP_AutopsyWithRVTable"), worldobjects, nil)
+            noTableParent.notAvailable = true
             local tooltip = ISToolTip:new()
             tooltip:initialise()
             tooltip:setVisible(false)
@@ -266,21 +414,38 @@ local function onFillWorldObjectContextMenu(playerNum, context, worldobjects, te
                 getText("UI_PIP_TableStatus_NotAvailable"),
                 getText("UI_PIP_RVNoTable")
             )
-            parent.toolTip = tooltip
+            noTableParent.toolTip = tooltip
         end
-        -- For other reasons (no_rv_mod, no_rv_nearby), silently skip
         return
     end
 
-    -- Remote table found — build submenu
-    local tableNotReady = remoteResult.status ~= "Empty"
-    local parent = context:addOption(getText("UI_PIP_AutopsyWithRVTable"), worldobjects, nil)
-    local subMenu = ISContextMenu:getNew(context)
-    context:addSubMenu(parent, subMenu)
+    -- Dispatch based on cached table status
+    local status = remoteResult.status
 
-    for _, entry in ipairs(corpseEntries) do
-        addCorpseOption(subMenu, player, entry.corpse, entry.square,
-            inv, remoteResult.status, tableNotReady, remoteResult, true)
+    if status == "Remains" then
+        -- Post-autopsy: offer extraction and collection options
+        addRemainsMenu(context, player, inv, remoteResult, worldobjects)
+
+    elseif status == "Dirty" then
+        -- Post-extraction: offer table cleanup
+        addDirtyMenu(context, player, inv, remoteResult, worldobjects)
+
+    elseif status == "Corpse" then
+        -- Corpse on table — can't do anything, show info
+        addCorpseStateInfo(context, worldobjects)
+
+    elseif status == "Empty" then
+        -- Table is ready — show autopsy options if corpses nearby
+        if #corpseEntries > 0 then
+            local parent = context:addOption(getText("UI_PIP_AutopsyWithRVTable"), worldobjects, nil)
+            local subMenu = ISContextMenu:getNew(context)
+            context:addSubMenu(parent, subMenu)
+
+            for _, entry in ipairs(corpseEntries) do
+                addCorpseOption(subMenu, player, entry.corpse, entry.square,
+                    inv, remoteResult.status, false, remoteResult, true)
+            end
+        end
     end
 end
 

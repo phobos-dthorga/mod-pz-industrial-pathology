@@ -29,6 +29,7 @@
 require "TimedActions/ISBaseTimedAction"
 require "PhobosLib"
 require "PIP_AutopsyProxy"
+require "PIP_RVBridge"
 
 PIP_TimedActionRemoteAutopsy = ISBaseTimedAction:derive("PIP_TimedActionRemoteAutopsy")
 
@@ -194,6 +195,16 @@ function PIP_TimedActionRemoteAutopsy:complete()
             corpseZ   = corpseZ,
         }
     )
+
+    -- Optimistic cache update: Empty → Remains
+    if rd.rvData and rd.rvData.vehicleId then
+        PIP_RVBridge.cacheTableLocation(self.character, rd.rvData.vehicleId, {
+            topX   = rd.remoteTopX,
+            topY   = rd.remoteTopY,
+            topZ   = rd.remoteTopZ,
+            status = "Remains",
+        })
+    end
 
     -- Update ZVV's client-side autopsy cache (prevents re-selecting this corpse)
     if not isServer() and corpseId and corpseX and corpseY and corpseZ then
