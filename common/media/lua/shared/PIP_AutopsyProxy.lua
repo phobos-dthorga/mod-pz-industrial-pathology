@@ -64,6 +64,31 @@ end
 -- Morgue table scanning
 ---------------------------------------------------------------
 
+--- Scan a single square for a ZVV morgue table.
+--- Returns {top, bottom, status} or nil.
+---@param sq any  IsoGridSquare
+---@return table|nil
+local function scanSquareForMorgueTable(sq)
+    local objs = sq:getObjects()
+    if not objs then return nil end
+
+    for i = 0, objs:size() - 1 do
+        local obj = objs:get(i)
+        if obj and instanceof(obj, "IsoThumpable") then
+            local sprite = obj:getSprite()
+            local spriteName = sprite and sprite.getName and sprite:getName() or nil
+            if spriteName and morgueTable[spriteName] then
+                local top, bottom, status = LabRecipes_GetBedObjects(obj, morgueTable)
+                if top and bottom and status then
+                    return { top = top, bottom = bottom, status = status }
+                end
+            end
+        end
+    end
+    return nil
+end
+
+
 --- Find the nearest morgue table within radius of a square.
 --- Returns the closest table of ANY status (Empty, Corpse, Remains, Dirty).
 --- Uses PhobosLib.scanNearbySquares for iteration and ZVV's
@@ -83,28 +108,15 @@ function PIP_Autopsy.findNearbyMorgueTable(originSquare, radius)
     local bestDist = math.huge
 
     PhobosLib.scanNearbySquares(originSquare, radius, function(sq)
-        local objs = sq:getObjects()
-        if not objs then return false end
-
-        for i = 0, objs:size() - 1 do
-            local obj = objs:get(i)
-            if obj and instanceof(obj, "IsoThumpable") then
-                local sprite = obj:getSprite()
-                local spriteName = sprite and sprite.getName and sprite:getName() or nil
-                if spriteName and morgueTable[spriteName] then
-                    local top, bottom, status = LabRecipes_GetBedObjects(obj, morgueTable)
-                    if top and bottom and status then
-                        local sok, sx = PhobosLib.pcallMethod(sq, "getX")
-                        local sok2, sy = PhobosLib.pcallMethod(sq, "getY")
-                        if sok and sok2 then
-                            local dist = (sx - cx) ^ 2 + (sy - cy) ^ 2
-                            if dist < bestDist then
-                                best = { top = top, bottom = bottom, status = status, distSq = dist }
-                                bestDist = dist
-                            end
-                        end
-                    end
-                    return false  -- found a table on this square, continue scanning for closer ones
+        local result = scanSquareForMorgueTable(sq)
+        if result then
+            local sok, sx = PhobosLib.pcallMethod(sq, "getX")
+            local sok2, sy = PhobosLib.pcallMethod(sq, "getY")
+            if sok and sok2 then
+                local dist = (sx - cx) ^ 2 + (sy - cy) ^ 2
+                if dist < bestDist then
+                    best = { top = result.top, bottom = result.bottom, status = result.status, distSq = dist }
+                    bestDist = dist
                 end
             end
         end
@@ -117,4 +129,75 @@ function PIP_Autopsy.findNearbyMorgueTable(originSquare, radius)
     end
 
     return best
+end
+
+
+---------------------------------------------------------------
+-- Remote table scanning (RV Bridge)
+---------------------------------------------------------------
+
+require "PIP_RVBridge"
+
+--- Find a morgue table inside an RV interior by scanning the room's
+--- coordinates. Returns table data with isRemote=true and the
+--- table top's world coordinates for ZVV relay.
+---@param player any     IsoPlayer
+---@param vehicleRadius number  How close player must be to the RV
+---@return table|nil  {top, bottom, status, isRemote, remoteTopX, remoteTopY, remoteTopZ, rvData} or nil
+---@return string|nil  reason code if failed: "no_rv_mod", "no_rv_nearby", "chunk_not_loaded", "no_table"
+function PIP_Autopsy.findRemoteTableViaRV(player, vehicleRadius)
+    if not PIP_Autopsy.isZVVCompatible() then return nil, "no_zvv" end
+    if not PIP_RVBridge.isAvailable() then return nil, "no_rv_mod" end
+
+    local rvData = PIP_RVBridge.findNearbyRVWithRoom(player, vehicleRadius)
+    if not rvData then return nil, "no_rv_nearby" end
+
+    local roomSq = PIP_RVBridge.getRoomSquare(rvData.room)
+    if not roomSq then return nil, "chunk_not_loaded" end
+
+    -- Scan a small area around the room entry point for a morgue table
+    local scanRadius = 8  -- rooms can be up to ~12 tiles; 8 covers most layouts
+    local best = nil
+    local bestDist = math.huge
+    local roomX, roomY = rvData.room.x, rvData.room.y
+
+    PhobosLib.scanNearbySquares(roomSq, scanRadius, function(sq)
+        local result = scanSquareForMorgueTable(sq)
+        if result then
+            local sok, sx = PhobosLib.pcallMethod(sq, "getX")
+            local sok2, sy = PhobosLib.pcallMethod(sq, "getY")
+            if sok and sok2 then
+                local dist = (sx - roomX) ^ 2 + (sy - roomY) ^ 2
+                if dist < bestDist then
+                    -- Get top piece coordinates for ZVV relay
+                    local topSq = result.top and result.top:getSquare()
+                    local topX = topSq and topSq:getX()
+                    local topY = topSq and topSq:getY()
+                    local topZ = topSq and topSq:getZ()
+                    if topX and topY and topZ then
+                        best = {
+                            top         = result.top,
+                            bottom      = result.bottom,
+                            status      = result.status,
+                            isRemote    = true,
+                            remoteTopX  = topX,
+                            remoteTopY  = topY,
+                            remoteTopZ  = topZ,
+                            rvData      = rvData,
+                        }
+                        bestDist = dist
+                    end
+                end
+            end
+        end
+        return false
+    end)
+
+    if best then
+        PhobosLib.debug("PIP", "RVTableScan", "Found remote morgue table in RV (status="
+            .. best.status .. " at " .. best.remoteTopX .. "," .. best.remoteTopY .. ")")
+        return best, nil
+    end
+
+    return nil, "no_table"
 end

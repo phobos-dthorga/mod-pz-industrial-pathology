@@ -13,5 +13,8 @@
     "UI_PIP_SetFreezer": "Set to Freezer",
     "UI_PIP_FridgeMode": "Fridge Mode",
     "UI_PIP_FreezerMode": "Freezer Mode",
-    "UI_PIP_ApplianceOff": "Off"
+    "UI_PIP_ApplianceOff": "Off",
+    "UI_PIP_AutopsyWithRVTable": "Autopsy (RV Lab Table)",
+    "UI_PIP_TableStatus_NotAvailable": "Not Available",
+    "UI_PIP_RVTableNotLoaded": "RV interior not loaded. Enter and exit your RV first."
 }

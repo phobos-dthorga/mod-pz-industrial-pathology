@@ -12,5 +12,9 @@
     "Sandbox_PIP_FridgeBatteryDrainRate": "FRIDGE BATTERY DRAIN RATE:",
     "Sandbox_PIP_FridgeBatteryDrainRate_tooltip": "Battery drain rate per in-game minute when the Portable Lab Fridge is active.<br><br> <INDENT:20>Default: 0.0003 per minute.<br> <INDENT:20>Range: 0.0 to 0.01.<br><br> <RGB:1,0.6,0.2> Set to 0 for no battery drain. Higher values drain faster. <RGB:1,1,1>",
     "Sandbox_PIP_MicrowaveBatteryDrainRate": "MICROWAVE BATTERY DRAIN RATE:",
-    "Sandbox_PIP_MicrowaveBatteryDrainRate_tooltip": "Battery drain rate per in-game minute when the Portable Lab Microwave is active.<br><br> <INDENT:20>Default: 0.001 per minute.<br> <INDENT:20>Range: 0.0 to 0.05.<br><br> <RGB:1,0.6,0.2> Set to 0 for no battery drain. Microwave drains faster than fridge. <RGB:1,1,1>"
+    "Sandbox_PIP_MicrowaveBatteryDrainRate_tooltip": "Battery drain rate per in-game minute when the Portable Lab Microwave is active.<br><br> <INDENT:20>Default: 0.001 per minute.<br> <INDENT:20>Range: 0.0 to 0.05.<br><br> <RGB:1,0.6,0.2> Set to 0 for no battery drain. Microwave drains faster than fridge. <RGB:1,1,1>",
+    "Sandbox_PIP_EnableRVBridge": "ENABLE RV BRIDGE:",
+    "Sandbox_PIP_EnableRVBridge_tooltip": "When enabled, allows using an Autopsy Table inside an RV Interior to perform autopsies on corpses near the vehicle. Full table-quality results without placing the corpse on the table.<br><br> <INDENT:20>-ON (default): RV Bridge autopsy enabled;<br> <INDENT:20>-OFF: Only proximity autopsy available.<br><br> <RGB:1,0.6,0.2> Requires PROJECT RV Interior and Zombie Virus Vaccine to be installed. <RGB:1,1,1>",
+    "Sandbox_PIP_RVVehicleSearchRange": "RV VEHICLE SEARCH RANGE (TILES):",
+    "Sandbox_PIP_RVVehicleSearchRange_tooltip": "Maximum distance in tiles from the player to the RV vehicle for the RV Bridge autopsy feature.<br><br> <INDENT:20>Default: 5 tiles.<br> <INDENT:20>Range: 1 to 10.<br><br> <RGB:1,0.6,0.2> The RV vehicle must be within this range of the player. <RGB:1,1,1>"
 }
