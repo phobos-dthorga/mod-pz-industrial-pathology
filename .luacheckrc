@@ -32,10 +32,6 @@ ignore = {
 globals = {
     "PIP_Sandbox",
     "PIP_Autopsy",
-    "PIP_Vehicle",
-
-    -- ZVV globals (mutated by RV Bridge cache update)
-    "LabModEngine",
 }
 
 read_globals = {
@@ -43,18 +39,10 @@ read_globals = {
     "PhobosLib",
 
     -- PZ Lua classes (not in JavaDocs — pure Lua, must stay manual)
-    "ISBaseTimedAction",
-    "ISButton",
-    "ISCollapsableWindow",
-    "ISModalRichText",
-    "ISRichTextPanel",
-    "ISTimedActionQueue",
     "ISContextMenu",
     "ISInventoryPage",
     "ISInventoryPaneContextMenu",
-    "ISToolTip",
     "ISWorldObjectContextMenu",
-    "ISLootWindowContainerControls",
 
     -- PZ globals not in JavaDocs (must stay manual)
     "Events",
