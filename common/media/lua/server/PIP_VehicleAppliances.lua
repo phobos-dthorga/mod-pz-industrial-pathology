@@ -99,32 +99,33 @@ local function injectApplianceParts()
         local script = allScripts:get(i)
         if script then
             local scriptName = script:getName() or "unknown"
+            local shouldSkip = false
 
             -- Skip our own template
             if scriptName == "PIPAppliances" then
-                goto continue
+                shouldSkip = true
             end
 
             -- Skip trailers (no battery)
-            if string.match(string.lower(scriptName), "trailer") then
+            if not shouldSkip and string.match(string.lower(scriptName), "trailer") then
                 skipped = skipped + 1
-                goto continue
+                shouldSkip = true
             end
 
-            -- Attempt injection via copyPartsFrom
-            local ok, err = pcall(function()
-                script:copyPartsFrom(pipTemplate, "part/PIPLabFridge")
-                script:copyPartsFrom(pipTemplate, "part/PIPLabMicrowave")
-            end)
+            if not shouldSkip then
+                -- Attempt injection via copyPartsFrom
+                local ok, err = pcall(function()
+                    script:copyPartsFrom(pipTemplate, "part/PIPLabFridge")
+                    script:copyPartsFrom(pipTemplate, "part/PIPLabMicrowave")
+                end)
 
-            if ok then
-                injected = injected + 1
-            else
-                PhobosLib.debug("PIP", "VehicleInject",
-                    "WARN: copyPartsFrom failed for " .. scriptName .. ": " .. tostring(err))
+                if ok then
+                    injected = injected + 1
+                else
+                    PhobosLib.debug("PIP", "VehicleInject",
+                        "WARN: copyPartsFrom failed for " .. scriptName .. ": " .. tostring(err))
+                end
             end
-
-            ::continue::
         end
     end
 
