@@ -14,15 +14,68 @@
  * \________________________________________________________________________/
  *
  * Battery template override — adds PIP appliance parts to all vehicles.
- * PZ merges template overrides (adds new parts, replaces same-named).
- * Only PIP-unique parts are declared here; vanilla Battery and Towbar
- * parts survive from their own template overrides.
+ * PZ template overrides REPLACE the entire template, so we must
+ * re-declare the vanilla Battery part to preserve vehicle functionality.
+ * Towbar parts are NOT included — the Towbar mod handles its own override.
  */
 
 module Base
 {
     template vehicle Battery
     {
+        /* -------------------------------------------------------
+         * Vanilla: Car Battery (must be re-declared — template
+         * overrides replace, not merge)
+         * ------------------------------------------------------- */
+        part Battery
+        {
+            mechanicArea = Engine,
+            area = Engine,
+            itemType = Base.CarBattery,
+            mechanicRequireKey = true,
+            category = engine,
+            durability = 2,
+
+            table install
+            {
+                items
+                {
+                    1
+                    {
+                        tags = base:screwdriver,
+                        count = 1,
+                        keep = true,
+                        equip = primary,
+                    }
+                }
+                time = 100,
+                test = Vehicles.InstallTest.Default,
+                door = EngineDoor,
+            }
+
+            table uninstall
+            {
+                items
+                {
+                    1
+                    {
+                        tags = base:screwdriver,
+                        count = 1,
+                        keep = true,
+                        equip = primary,
+                    }
+                }
+                time = 100,
+                test = Vehicles.UninstallTest.Battery,
+            }
+
+            lua
+            {
+                create = Vehicles.Create.Battery,
+                update = Vehicles.Update.Battery,
+            }
+        }
+
         /* -------------------------------------------------------
          * PIP: Portable Lab Fridge
          * ------------------------------------------------------- */
