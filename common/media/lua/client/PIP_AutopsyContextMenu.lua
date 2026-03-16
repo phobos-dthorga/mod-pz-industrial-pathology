@@ -39,7 +39,19 @@ local function arePrerequisitesMet()
     if not PhobosLib.isExperimentalEnabled() then return false end
     if not PIP_Sandbox.isRVAutopsyProxyEnabled() then return false end
     if not PhobosLib.isModActive("ZVirusVaccine42BETA") then return false end
+    if not PIP_RV.isZVVCompatible() then return false end
     return true
+end
+
+
+--- Extract sprite name from an object via PhobosLib.
+---@param obj any  IsoObject
+---@return string|nil
+local function getSpriteName(obj)
+    local ok, sprite = PhobosLib.pcallMethod(obj, "getSprite")
+    if not ok or not sprite then return nil end
+    local ok2, name = PhobosLib.pcallMethod(sprite, "getName")
+    return (ok2 and name) or nil
 end
 
 
@@ -49,6 +61,9 @@ end
 
 --- Get the vehicle associated with the RV the player is currently in.
 --- Uses Project RV Interior's global ModData to find the vehicle.
+--- NOTE (MP): getOnlineID() -> getUsername() fallback is sound for SP
+--- and standard MP. Edge cases (split-screen, reconnects, stale ModData)
+--- need in-game MP testing but no code changes without concrete failures.
 ---@param player any  IsoPlayer
 ---@return any|nil  BaseVehicle or nil
 local function getPlayerRVVehicle(player)
@@ -57,10 +72,11 @@ local function getPlayerRVVehicle(player)
     local rvModData = ModData.getOrCreate("modPROJECTRVInterior")
     if not rvModData or not rvModData.Players then return nil end
 
-    local playerKey = nil
-    pcall(function() playerKey = tostring(player:getOnlineID()) end)
+    local ok, onlineId = PhobosLib.pcallMethod(player, "getOnlineID")
+    local playerKey = ok and onlineId and tostring(onlineId) or nil
     if not playerKey then
-        pcall(function() playerKey = tostring(player:getUsername()) end)
+        local ok2, username = PhobosLib.pcallMethod(player, "getUsername")
+        playerKey = ok2 and username and tostring(username) or nil
     end
     if not playerKey then return nil end
 
@@ -71,16 +87,14 @@ local function getPlayerRVVehicle(player)
     local cell = getCell()
     if not cell then return nil end
 
-    local vehicles = nil
-    pcall(function() vehicles = cell:getVehicles() end)
-    if not vehicles then return nil end
+    local ok3, vehicles = PhobosLib.pcallMethod(cell, "getVehicles")
+    if not ok3 or not vehicles then return nil end
 
     local targetId = playerEntry.VehicleId
     for i = 0, vehicles:size() - 1 do
         local v = vehicles:get(i)
         if v then
-            local md = nil
-            pcall(function() md = v:getModData() end)
+            local md = PhobosLib.getModData(v)
             if md and md.projectRV_uniqueId == targetId then
                 return v
             end
@@ -101,13 +115,7 @@ local function onRegisterProxy(player, obj, vehicle)
     local sq = obj:getSquare()
     if not sq then return end
 
-    local spriteName = nil
-    pcall(function()
-        local sprite = obj:getSprite()
-        if sprite and sprite.getName then
-            spriteName = sprite:getName()
-        end
-    end)
+    local spriteName = getSpriteName(obj)
 
     -- Find the top piece — register against that
     if morgueTable and spriteName and morgueTable[spriteName] then
@@ -115,8 +123,7 @@ local function onRegisterProxy(player, obj, vehicle)
         if top then
             local topSq = top:getSquare()
             if topSq then
-                local topSprite = nil
-                pcall(function() topSprite = top:getSprite():getName() end)
+                local topSprite = getSpriteName(top)
                 PIP_RV.registerProxy(vehicle, topSq:getX(), topSq:getY(), topSq:getZ(), topSprite or spriteName)
                 PhobosLib.say(player, getText("UI_PIP_ProxyRegistered"))
                 return
@@ -146,18 +153,11 @@ end
 ---@param worldobjects table
 local function addInsideRVOptions(player, context, worldobjects)
     if not PIP_RV.isPlayerInRV(player) then return end
-    if not morgueTable then return end
 
     -- Find morgue table object in clicked world objects
     for _, obj in ipairs(worldobjects) do
         if obj and instanceof(obj, "IsoThumpable") then
-            local spriteName = nil
-            pcall(function()
-                local sprite = obj:getSprite()
-                if sprite and sprite.getName then
-                    spriteName = sprite:getName()
-                end
-            end)
+            local spriteName = getSpriteName(obj)
             if spriteName and morgueTable[spriteName] then
                 local vehicle = getPlayerRVVehicle(player)
                 if not vehicle then return end
@@ -228,8 +228,9 @@ local function addOutsideRVOptions(player, context, worldobjects)
     local sq = nil
     for _, obj in ipairs(worldobjects) do
         if obj and obj.getSquare then
-            pcall(function() sq = obj:getSquare() end)
-            if sq then break end
+            local ok
+            ok, sq = PhobosLib.pcallMethod(obj, "getSquare")
+            if ok and sq then break end
         end
     end
     if not sq then return end
@@ -240,8 +241,13 @@ local function addOutsideRVOptions(player, context, worldobjects)
     -- Fetch the actual table objects from the RV interior
     local top, bottom, status = PIP_RV.fetchTableObjects(match.proxyData)
 
-    -- Check table accessibility and status
-    if not top or not bottom then return end
+    -- Auto-invalidate proxy if table is no longer accessible
+    if not top or not bottom then
+        PIP_RV.clearProxy(match.vehicle)
+        PhobosLib.say(player, getText("UI_PIP_ProxyInvalidated"))
+        PhobosLib.debug("PIP", "RVProxy", "Auto-invalidated proxy — table not accessible")
+        return
+    end
 
     if status ~= "Empty" then
         -- Table is occupied — add disabled option with explanation
@@ -253,41 +259,50 @@ local function addOutsideRVOptions(player, context, worldobjects)
         return
     end
 
-    -- Add autopsy option for each valid corpse
-    local hasValidCorpse = false
+    -- Collect valid corpses with debug logging for rejections
+    local candidates = {}
     for _, corpse in ipairs(corpses) do
-        local isZombie = false
-        pcall(function() isZombie = corpse:isZombie() end)
+        local ok, isZombie = PhobosLib.pcallMethod(corpse, "isZombie")
+        isZombie = ok and isZombie or false
 
         local alreadyAutopsied = false
-        pcall(function()
-            local md = corpse:getModData()
-            alreadyAutopsied = md and md.Autopsy == true
-        end)
+        local md = PhobosLib.getModData(corpse)
+        if md then
+            alreadyAutopsied = md.Autopsy == true
+        end
 
         local age = PhobosLib.getCorpseAge(corpse)
-        -- Use ZVV's 12-hour limit for consistency
-        local tooOld = age > 12
+        local tooOld = age > PIP_RV.ZVV_AUTOPSY_MAX_HOURS
 
-        if isZombie and not alreadyAutopsied and not tooOld then
-            hasValidCorpse = true
-            local opt = context:addOption(
-                getText("UI_PIP_AutopsyRVTable"),
-                player, onProxyAutopsy, corpse, top, bottom
-            )
-            local tooltip = ISWorldObjectContextMenu.addToolTip()
-            tooltip.description = getText("UI_PIP_AutopsyRVTable_Tooltip")
-            opt.toolTip = tooltip
-
-            -- Check ZVV equipment requirements and mark unavailable if missing
-            if LabRecipes_CreateCorpseAutopsyTooltip then
-                local inv = player:getInventory()
-                local notFresh = tooOld
-                local notZombie = not isZombie
-                local notOrgans = alreadyAutopsied
-                LabRecipes_CreateCorpseAutopsyTooltip(opt, inv, notFresh, notZombie, notOrgans)
-            end
+        if not isZombie then
+            PhobosLib.debug("PIP", "CorpseGate", "Rejected: not a zombie")
+        elseif alreadyAutopsied then
+            PhobosLib.debug("PIP", "CorpseGate", "Rejected: already autopsied")
+        elseif tooOld then
+            PhobosLib.debug("PIP", "CorpseGate", "Rejected: age " .. string.format("%.1f", age) .. "h > limit")
+        else
+            table.insert(candidates, { corpse = corpse, age = age })
         end
+    end
+
+    if #candidates == 0 then return end
+
+    -- Sort by age ascending (freshest first), pick only the freshest
+    table.sort(candidates, function(a, b) return a.age < b.age end)
+    local best = candidates[1]
+
+    local opt = context:addOption(
+        getText("UI_PIP_AutopsyRVTable"),
+        player, onProxyAutopsy, best.corpse, top, bottom
+    )
+    local tooltip = ISWorldObjectContextMenu.addToolTip()
+    tooltip.description = getText("UI_PIP_AutopsyRVTable_Tooltip")
+    opt.toolTip = tooltip
+
+    -- Enhance tooltip with ZVV equipment requirements if available
+    if LabRecipes_CreateCorpseAutopsyTooltip then
+        local inv = player:getInventory()
+        LabRecipes_CreateCorpseAutopsyTooltip(opt, inv, false, false, false)
     end
 end
 

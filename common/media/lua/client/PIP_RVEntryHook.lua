@@ -21,7 +21,7 @@
 -- been removed, modified, or destroyed, the proxy is cleared
 -- and the player is notified.
 --
--- Detection: Polls player position on EveryTenMinutes. When
+-- Detection: Polls player position on EveryOneMinute. When
 -- player transitions from outside to inside RV coordinates,
 -- triggers validation. This avoids hooking RV Interior's
 -- internal teleport functions directly (fragile).
@@ -57,12 +57,16 @@ local function onEveryOneMinute()
         PhobosLib.debug("PIP", "RVEntry", "Player entered RV Interior — validating proxy")
 
         -- Find which vehicle this player is in via RV Interior's ModData
+        -- NOTE (MP): getOnlineID() -> getUsername() fallback is sound for SP
+        -- and standard MP. Edge cases (split-screen, reconnects, stale ModData)
+        -- need in-game MP testing but no code changes without concrete failures.
         local rvModData = ModData.getOrCreate("modPROJECTRVInterior")
         if rvModData and rvModData.Players then
-            local pKey = nil
-            pcall(function() pKey = tostring(player:getOnlineID()) end)
+            local ok, onlineId = PhobosLib.pcallMethod(player, "getOnlineID")
+            local pKey = ok and onlineId and tostring(onlineId) or nil
             if not pKey then
-                pcall(function() pKey = tostring(player:getUsername()) end)
+                local ok2, username = PhobosLib.pcallMethod(player, "getUsername")
+                pKey = ok2 and username and tostring(username) or nil
             end
 
             if pKey and rvModData.Players[pKey] then
@@ -71,14 +75,12 @@ local function onEveryOneMinute()
                     -- Find the vehicle object
                     local cell = getCell()
                     if cell then
-                        local vehicles = nil
-                        pcall(function() vehicles = cell:getVehicles() end)
-                        if vehicles then
+                        local ok3, vehicles = PhobosLib.pcallMethod(cell, "getVehicles")
+                        if ok3 and vehicles then
                             for i = 0, vehicles:size() - 1 do
                                 local v = vehicles:get(i)
                                 if v then
-                                    local md = nil
-                                    pcall(function() md = v:getModData() end)
+                                    local md = PhobosLib.getModData(v)
                                     if md and md.projectRV_uniqueId == entry.VehicleId then
                                         local proxyData = PIP_RV.getProxyData(v)
                                         if proxyData then

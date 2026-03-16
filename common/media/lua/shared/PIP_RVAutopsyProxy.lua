@@ -32,14 +32,65 @@ PIP_RV = PIP_RV or {}
 local RV_INTERIOR_X_THRESHOLD = 22500
 local RV_INTERIOR_Y_THRESHOLD = 12000
 
+--- ZVV's corpse age limit for autopsy eligibility (hours).
+--- Mirrors LabConst.AUTOPSY_MAX_HOURS. Update if ZVV changes this.
+PIP_RV.ZVV_AUTOPSY_MAX_HOURS = 12
+
+
+---------------------------------------------------------------
+-- ZVV compatibility gate
+---------------------------------------------------------------
+
+local zvvCompatChecked = false
+local zvvCompatResult = false
+
+--- Check if all required ZVV globals are available.
+--- Caches result after first check. LabRecipes_CreateCorpseAutopsyTooltip
+--- is optional (tooltip enhancement only) and not included in the gate.
+---@return boolean
+function PIP_RV.isZVVCompatible()
+    if zvvCompatChecked then return zvvCompatResult end
+    zvvCompatChecked = true
+    local missing = {}
+    if not morgueTable then table.insert(missing, "morgueTable") end
+    if not LabRecipes_GetBedObjects then table.insert(missing, "LabRecipes_GetBedObjects") end
+    if not LabActionMakeAutopsy then table.insert(missing, "LabActionMakeAutopsy") end
+    if #missing > 0 then
+        PhobosLib.debug("PIP", "ZVVCompat", "Missing ZVV globals: " .. table.concat(missing, ", "))
+        zvvCompatResult = false
+        return false
+    end
+    zvvCompatResult = true
+    return true
+end
+
+
+---------------------------------------------------------------
+-- Sprite name helper
+---------------------------------------------------------------
+
+--- Extract the sprite name from an IsoObject using PhobosLib.
+---@param obj any  IsoObject
+---@return string|nil
+local function getSpriteName(obj)
+    local ok, sprite = PhobosLib.pcallMethod(obj, "getSprite")
+    if not ok or not sprite then return nil end
+    local ok2, name = PhobosLib.pcallMethod(sprite, "getName")
+    return (ok2 and name) or nil
+end
+
+
+---------------------------------------------------------------
+-- Core functions
+---------------------------------------------------------------
 
 --- Check if a player is currently inside an RV Interior.
 ---@param player any  IsoPlayer
 ---@return boolean
 function PIP_RV.isPlayerInRV(player)
     if not player then return false end
-    local ok, px = pcall(function() return player:getX() end)
-    local ok2, py = pcall(function() return player:getY() end)
+    local ok, px = PhobosLib.pcallMethod(player, "getX")
+    local ok2, py = PhobosLib.pcallMethod(player, "getY")
     if not (ok and ok2) then return false end
     return px > RV_INTERIOR_X_THRESHOLD and py > RV_INTERIOR_Y_THRESHOLD
 end
@@ -50,8 +101,7 @@ end
 ---@return table|nil  {x, y, z, sprite} or nil if not registered
 function PIP_RV.getProxyData(vehicle)
     if not vehicle then return nil end
-    local md = nil
-    pcall(function() md = vehicle:getModData() end)
+    local md = PhobosLib.getModData(vehicle)
     if not md then return nil end
     return md.PIP_AutopsyProxy
 end
@@ -65,8 +115,7 @@ end
 ---@param sprite string     Sprite name of the table top piece
 function PIP_RV.registerProxy(vehicle, tableX, tableY, tableZ, sprite)
     if not vehicle then return end
-    local md = nil
-    pcall(function() md = vehicle:getModData() end)
+    local md = PhobosLib.getModData(vehicle)
     if not md then return end
     md.PIP_AutopsyProxy = {
         x = tableX,
@@ -83,8 +132,7 @@ end
 ---@param vehicle any  BaseVehicle
 function PIP_RV.clearProxy(vehicle)
     if not vehicle then return end
-    local md = nil
-    pcall(function() md = vehicle:getModData() end)
+    local md = PhobosLib.getModData(vehicle)
     if not md then return end
     md.PIP_AutopsyProxy = nil
     PhobosLib.debug("PIP", "RVProxy", "Cleared autopsy table proxy")
@@ -99,18 +147,16 @@ function PIP_RV.validateProxy(vehicle)
     local proxyData = PIP_RV.getProxyData(vehicle)
     if not proxyData then return false end
 
+    if not PIP_RV.isZVVCompatible() then
+        PIP_RV.clearProxy(vehicle)
+        return false
+    end
+
     local cell = getCell()
     if not cell then return false end
 
     local sq = cell:getGridSquare(proxyData.x, proxyData.y, proxyData.z)
     if not sq then
-        PIP_RV.clearProxy(vehicle)
-        return false
-    end
-
-    -- Check if any object on this square has a morgueTable sprite
-    if not morgueTable then
-        -- ZVV not loaded or morgueTable global not available
         PIP_RV.clearProxy(vehicle)
         return false
     end
@@ -124,13 +170,7 @@ function PIP_RV.validateProxy(vehicle)
     for i = 0, objs:size() - 1 do
         local obj = objs:get(i)
         if obj and instanceof(obj, "IsoThumpable") then
-            local spriteName = nil
-            pcall(function()
-                local sprite = obj:getSprite()
-                if sprite and sprite.getName then
-                    spriteName = sprite:getName()
-                end
-            end)
+            local spriteName = getSpriteName(obj)
             if spriteName and morgueTable[spriteName] then
                 return true
             end
@@ -144,22 +184,40 @@ function PIP_RV.validateProxy(vehicle)
 end
 
 
---- Find the first nearby vehicle (within radius) that has a registered proxy.
+--- Find the nearest nearby vehicle (within radius) that has a registered proxy.
+--- Deterministic: picks nearest by squared distance, tie-breaks on vehicle ID.
 ---@param player any     IsoPlayer
 ---@param radius number  Tile radius
 ---@return table|nil  {vehicle, proxyData} or nil
 function PIP_RV.findNearbyProxiedVehicle(player, radius)
     if not player then return nil end
+    local sq = PhobosLib.getSquareFromPlayer(player)
+    if not sq then return nil end
+    local ok, px = PhobosLib.pcallMethod(sq, "getX")
+    local ok2, py = PhobosLib.pcallMethod(sq, "getY")
+    if not (ok and ok2) then return nil end
+
     local vehicles = PhobosLib.findAllNearbyVehicles(player, radius)
+    local best, bestDist, bestId = nil, math.huge, nil
 
     for _, v in ipairs(vehicles) do
         local proxyData = PIP_RV.getProxyData(v)
         if proxyData then
-            return { vehicle = v, proxyData = proxyData }
+            local vok, vx = PhobosLib.pcallMethod(v, "getX")
+            local vok2, vy = PhobosLib.pcallMethod(v, "getY")
+            if vok and vok2 then
+                local dist = (vx - px) ^ 2 + (vy - py) ^ 2
+                local md = PhobosLib.getModData(v)
+                local vid = md and tostring(md.projectRV_uniqueId or "") or ""
+                if dist < bestDist or (dist == bestDist and vid < (bestId or "")) then
+                    best = { vehicle = v, proxyData = proxyData }
+                    bestDist = dist
+                    bestId = vid
+                end
+            end
         end
     end
-
-    return nil
+    return best
 end
 
 
@@ -169,6 +227,7 @@ end
 ---@return any, any, string|nil  top, bottom, status — or nil if not accessible
 function PIP_RV.fetchTableObjects(proxyData)
     if not proxyData then return nil, nil, nil end
+    if not PIP_RV.isZVVCompatible() then return nil, nil, nil end
 
     local cell = getCell()
     if not cell then return nil, nil, nil end
@@ -183,20 +242,10 @@ function PIP_RV.fetchTableObjects(proxyData)
     for i = 0, objs:size() - 1 do
         local obj = objs:get(i)
         if obj and instanceof(obj, "IsoThumpable") then
-            local spriteName = nil
-            pcall(function()
-                local sprite = obj:getSprite()
-                if sprite and sprite.getName then
-                    spriteName = sprite:getName()
-                end
-            end)
-            if spriteName and morgueTable and morgueTable[spriteName] then
-                -- Use ZVV's own function to get both table pieces
-                if LabRecipes_GetBedObjects then
-                    local top, bottom, status = LabRecipes_GetBedObjects(obj, morgueTable)
-                    return top, bottom, status
-                end
-                return nil, nil, nil
+            local spriteName = getSpriteName(obj)
+            if spriteName and morgueTable[spriteName] then
+                local top, bottom, status = LabRecipes_GetBedObjects(obj, morgueTable)
+                return top, bottom, status
             end
         end
     end
