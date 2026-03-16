@@ -17,14 +17,14 @@
 ---------------------------------------------------------------
 -- PIP_VehicleAppliances.lua
 -- Server-side vehicle appliance system for PIP.
--- Handles dynamic part injection at OnGameBoot, temperature
--- control updates, battery drain, and container access.
+-- Parts are injected via Battery template override (script-level).
+-- This file handles temperature control, battery drain,
+-- container access, and client command processing.
 --
--- Depends on: PhobosLib
+-- Depends on: PhobosLib >= 1.23.0
 ---------------------------------------------------------------
 
 require "PhobosLib"
-require "Vehicles/Vehicles"
 
 PIP_Vehicle = PIP_Vehicle or {}
 PIP_Vehicle.Create = PIP_Vehicle.Create or {}
@@ -34,8 +34,6 @@ PIP_Vehicle.ContainerAccess = PIP_Vehicle.ContainerAccess or {}
 ---------------------------------------------------------------
 -- Constants
 ---------------------------------------------------------------
-
-local TEMPLATE_NAME = "Base.PIPAppliances"
 
 local FRIDGE_TEMP = 0.2
 local FREEZER_TEMP = -0.2
@@ -65,87 +63,16 @@ end
 
 
 ---------------------------------------------------------------
--- OnGameBoot: Dynamic part injection via copyPartsFrom
+-- OnGameBoot: Verify template parts exist (conflict detection)
 ---------------------------------------------------------------
 
-local function injectApplianceParts()
-    if not isFeatureEnabled() then
-        PhobosLib.debug("PIP", "VehicleInject", "Vehicle appliances disabled in sandbox")
-        return
-    end
-
-    local scriptManager = getScriptManager()
-    if not scriptManager then
-        PhobosLib.debug("PIP", "VehicleInject", "ERROR: getScriptManager() returned nil")
-        return
-    end
-
-    local pipTemplate = scriptManager:getVehicle(TEMPLATE_NAME)
-    print("[PIP] getVehicle('" .. TEMPLATE_NAME .. "') = " .. tostring(pipTemplate))
-    if not pipTemplate then
-        print("[PIP] ERROR: Template not found. Aborting injection.")
-        return
-    end
-
-    local allScripts = scriptManager:getAllVehicleScripts()
-    if not allScripts then
-        print("[PIP] ERROR: getAllVehicleScripts() returned nil")
-        return
-    end
-
-    print("[PIP] Total vehicle scripts found: " .. allScripts:size())
-
-    local injected = 0
-    local skipped = 0
-    local failed = 0
-
-    for i = 0, allScripts:size() - 1 do
-        local script = allScripts:get(i)
-        if script then
-            local scriptName = script:getName() or "unknown"
-            local shouldSkip = false
-
-            -- Skip our own template
-            if scriptName == "PIPAppliances" then
-                shouldSkip = true
-            end
-
-            -- Skip trailers (no battery)
-            if not shouldSkip and string.match(string.lower(scriptName), "trailer") then
-                skipped = skipped + 1
-                shouldSkip = true
-            end
-
-            if not shouldSkip then
-                local partsBefore = script:getPartCount()
-
-                -- Attempt injection via copyPartsFrom (spec = part ID only, no "part/" prefix)
-                local ok, err = pcall(function()
-                    script:copyPartsFrom(pipTemplate, "PIPLabFridge")
-                    script:copyPartsFrom(pipTemplate, "PIPLabMicrowave")
-                end)
-
-                local partsAfter = script:getPartCount()
-
-                if ok then
-                    injected = injected + 1
-                    -- Log first few vehicles for diagnostics
-                    if injected <= 3 then
-                        print("[PIP] Injected into '" .. scriptName .. "': parts " .. partsBefore .. " -> " .. partsAfter)
-                    end
-                else
-                    failed = failed + 1
-                    print("[PIP] WARN: copyPartsFrom failed for " .. scriptName .. ": " .. tostring(err))
-                end
-            end
-        end
-    end
-
-    print("[PIP] Injection complete: " .. injected .. " patched, "
-        .. skipped .. " trailers skipped, " .. failed .. " failed")
+local function verifyApplianceParts()
+    if not isFeatureEnabled() then return end
+    PhobosLib.verifyVehicleTemplatePart("PIPLabFridge", "PIP")
+    PhobosLib.verifyVehicleTemplatePart("PIPLabMicrowave", "PIP")
 end
 
-Events.OnGameBoot.Add(injectApplianceParts)
+Events.OnGameBoot.Add(verifyApplianceParts)
 
 
 ---------------------------------------------------------------
@@ -182,7 +109,7 @@ function PIP_Vehicle.Update.Fridge(vehicle, part, elapsedMinutes)
 
     if sysData.active then
         -- Battery check
-        local charge = vehicle:getBatteryCharge()
+        local charge = PhobosLib.getVehicleBatteryCharge(vehicle)
         if charge < MIN_BATTERY then
             sysData.active = false
             container:setCustomTemperature(ROOM_TEMP)
@@ -192,7 +119,7 @@ function PIP_Vehicle.Update.Fridge(vehicle, part, elapsedMinutes)
 
         -- Drain battery
         local drainRate = getFridgeDrainRate()
-        VehicleUtils.chargeBattery(vehicle, -drainRate * elapsedMinutes)
+        PhobosLib.drainVehicleBattery(vehicle, drainRate * elapsedMinutes)
 
         -- Set temperature
         local targetTemp = sysData.isFreezer and FREEZER_TEMP or FRIDGE_TEMP
@@ -245,7 +172,7 @@ function PIP_Vehicle.Update.Microwave(vehicle, part, elapsedMinutes)
 
     if sysData.active then
         -- Battery check
-        local charge = vehicle:getBatteryCharge()
+        local charge = PhobosLib.getVehicleBatteryCharge(vehicle)
         if charge < MIN_BATTERY then
             sysData.active = false
             sysData.timer = 0
@@ -268,7 +195,7 @@ function PIP_Vehicle.Update.Microwave(vehicle, part, elapsedMinutes)
 
         -- Drain battery (higher rate than fridge)
         local drainRate = getMicrowaveDrainRate()
-        VehicleUtils.chargeBattery(vehicle, -drainRate * elapsedMinutes)
+        PhobosLib.drainVehicleBattery(vehicle, drainRate * elapsedMinutes)
 
         -- Set heating temperature
         local rawTemp = sysData.maxTemp or 100

@@ -57,13 +57,10 @@ read_globals = {
     "ArrayList",
     "ProceduralDistributions",
     "SuburbsDistributions",
-    "Vehicles",
     "VehicleDistributions",
-    "VehicleUtils",
     "forageSystem",
     "sendClientCommand",
     "getVehicleById",
-    "getScriptManager",
     "luautils",
 
     -- Cross-mod (optional, runtime-guarded)

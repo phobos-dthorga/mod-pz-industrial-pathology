@@ -1,0 +1,268 @@
+/*  ________________________________________________________________________
+ * / Copyright (c) 2026 Phobos A. D'thorga                                \
+ * |                                                                        |
+ * |           /\_/\                                                         |
+ * |         =/ o o \=    Phobos' PZ Modding                                |
+ * |          (  V  )     All rights reserved.                              |
+ * |     /\  / \   / \                                                      |
+ * |    /  \/   '-'   \   This source code is part of the Phobos            |
+ * |   /  /  \  ^  /\  \  mod suite for Project Zomboid (Build 42).         |
+ * |  (__/    \_/ \/  \__)                                                  |
+ * |     |   | |  | |     Unauthorised copying, modification, or            |
+ * |     |___|_|  |_|     distribution of this file is prohibited.          |
+ * |                                                                        |
+ * \________________________________________________________________________/
+ *
+ * Battery template override — adds PIP appliance parts to all vehicles.
+ * Also includes Towbar mod parts for cross-mod compatibility.
+ * PIP must load AFTER Towbar (see mod.info loadModAfter).
+ */
+
+module Base
+{
+    template vehicle Battery
+    {
+        /* -------------------------------------------------------
+         * PIP: Portable Lab Fridge
+         * ------------------------------------------------------- */
+        part PIPLabFridge
+        {
+            area = TrunkBed,
+            itemType = PhobosIndustrialPathology.PortableLabFridge,
+            mechanicRequireKey = true,
+            category = Other,
+
+            container
+            {
+                capacity = 15,
+                test = PIP_Vehicle.ContainerAccess.Fridge,
+            }
+
+            table install
+            {
+                items
+                {
+                    1
+                    {
+                        tags = base:screwdriver,
+                        count = 1,
+                        keep = true,
+                        equip = primary,
+                    }
+                }
+                time = 200,
+                skills = Electricity:2,
+                test = Vehicles.InstallTest.Default,
+            }
+
+            table uninstall
+            {
+                items
+                {
+                    1
+                    {
+                        tags = base:screwdriver,
+                        count = 1,
+                        keep = true,
+                        equip = primary,
+                    }
+                }
+                time = 200,
+                requireEmpty = true,
+                test = Vehicles.UninstallTest.Default,
+            }
+
+            lua
+            {
+                create = PIP_Vehicle.Create.Appliance,
+                update = PIP_Vehicle.Update.Fridge,
+            }
+        }
+
+        /* -------------------------------------------------------
+         * PIP: Portable Lab Microwave
+         * ------------------------------------------------------- */
+        part PIPLabMicrowave
+        {
+            area = TrunkBed,
+            itemType = PhobosIndustrialPathology.PortableLabMicrowave,
+            mechanicRequireKey = true,
+            category = Other,
+
+            container
+            {
+                capacity = 10,
+                test = PIP_Vehicle.ContainerAccess.Microwave,
+            }
+
+            table install
+            {
+                items
+                {
+                    1
+                    {
+                        tags = base:screwdriver,
+                        count = 1,
+                        keep = true,
+                        equip = primary,
+                    }
+                }
+                time = 200,
+                skills = Electricity:3,
+                test = Vehicles.InstallTest.Default,
+            }
+
+            table uninstall
+            {
+                items
+                {
+                    1
+                    {
+                        tags = base:screwdriver,
+                        count = 1,
+                        keep = true,
+                        equip = primary,
+                    }
+                }
+                time = 200,
+                requireEmpty = true,
+                test = Vehicles.UninstallTest.Default,
+            }
+
+            lua
+            {
+                create = PIP_Vehicle.Create.Appliance,
+                update = PIP_Vehicle.Update.Microwave,
+            }
+        }
+
+        /* -------------------------------------------------------
+         * Towbar compatibility: towbar (normal scale)
+         * Copied from Towbar mod (Workshop ID 3661430479)
+         * ------------------------------------------------------- */
+        part towbar
+        {
+            model towbar0  { file = towbarModel, offset = 0 -0.3 1.0, }
+            model towbar1  { file = towbarModel, offset = 0 -0.3 1.1, }
+            model towbar2  { file = towbarModel, offset = 0 -0.3 1.2, }
+            model towbar3  { file = towbarModel, offset = 0 -0.3 1.3, }
+            model towbar4  { file = towbarModel, offset = 0 -0.3 1.4, }
+            model towbar5  { file = towbarModel, offset = 0 -0.3 1.5, }
+            model towbar6  { file = towbarModel, offset = 0 -0.3 1.6, }
+            model towbar7  { file = towbarModel, offset = 0 -0.3 1.7, }
+            model towbar8  { file = towbarModel, offset = 0 -0.3 1.8, }
+            model towbar9  { file = towbarModel, offset = 0 -0.3 1.9, }
+            model towbar10 { file = towbarModel, offset = 0 -0.3 2.0, }
+            model towbar11 { file = towbarModel, offset = 0 -0.3 2.1, }
+            model towbar12 { file = towbarModel, offset = 0 -0.3 2.2, }
+            model towbar13 { file = towbarModel, offset = 0 -0.3 2.3, }
+            model towbar14 { file = towbarModel, offset = 0 -0.3 2.4, }
+            model towbar15 { file = towbarModel, offset = 0 -0.3 2.5, }
+            model towbar16 { file = towbarModel, offset = 0 -0.3 2.6, }
+            model towbar17 { file = towbarModel, offset = 0 -0.3 2.7, }
+            model towbar18 { file = towbarModel, offset = 0 -0.3 2.8, }
+            model towbar19 { file = towbarModel, offset = 0 -0.3 2.9, }
+            model towbar20 { file = towbarModel, offset = 0 -0.3 3.0, }
+            model towbar21 { file = towbarModel, offset = 0 -0.3 3.1, }
+            model towbar22 { file = towbarModel, offset = 0 -0.3 3.2, }
+            model towbar23 { file = towbarModel, offset = 0 -0.3 3.3, }
+
+            area = Engine,
+            mechanicRequireKey = false,
+            lua
+            {
+                create = BTtow.Create.towbar,
+                init = BTtow.Init.towbar,
+            }
+        }
+
+        /* -------------------------------------------------------
+         * Towbar compatibility: towbarLarge (large scale)
+         * Copied from Towbar mod (Workshop ID 3661430479)
+         * ------------------------------------------------------- */
+        part towbarLarge
+        {
+            model towbar0  { file = towbarModelLarge, offset = 0 -0.3 1.0, }
+            model towbar1  { file = towbarModelLarge, offset = 0 -0.3 1.1, }
+            model towbar2  { file = towbarModelLarge, offset = 0 -0.3 1.2, }
+            model towbar3  { file = towbarModelLarge, offset = 0 -0.3 1.3, }
+            model towbar4  { file = towbarModelLarge, offset = 0 -0.3 1.4, }
+            model towbar5  { file = towbarModelLarge, offset = 0 -0.3 1.5, }
+            model towbar6  { file = towbarModelLarge, offset = 0 -0.3 1.6, }
+            model towbar7  { file = towbarModelLarge, offset = 0 -0.3 1.7, }
+            model towbar8  { file = towbarModelLarge, offset = 0 -0.3 1.8, }
+            model towbar9  { file = towbarModelLarge, offset = 0 -0.3 1.9, }
+            model towbar10 { file = towbarModelLarge, offset = 0 -0.3 2.0, }
+            model towbar11 { file = towbarModelLarge, offset = 0 -0.3 2.1, }
+            model towbar12 { file = towbarModelLarge, offset = 0 -0.3 2.2, }
+            model towbar13 { file = towbarModelLarge, offset = 0 -0.3 2.3, }
+            model towbar14 { file = towbarModelLarge, offset = 0 -0.3 2.4, }
+            model towbar15 { file = towbarModelLarge, offset = 0 -0.3 2.5, }
+            model towbar16 { file = towbarModelLarge, offset = 0 -0.3 2.6, }
+            model towbar17 { file = towbarModelLarge, offset = 0 -0.3 2.7, }
+            model towbar18 { file = towbarModelLarge, offset = 0 -0.3 2.8, }
+            model towbar19 { file = towbarModelLarge, offset = 0 -0.3 2.9, }
+            model towbar20 { file = towbarModelLarge, offset = 0 -0.3 3.0, }
+            model towbar21 { file = towbarModelLarge, offset = 0 -0.3 3.1, }
+            model towbar22 { file = towbarModelLarge, offset = 0 -0.3 3.2, }
+            model towbar23 { file = towbarModelLarge, offset = 0 -0.3 3.3, }
+
+            area = Engine,
+            mechanicRequireKey = false,
+            lua
+            {
+                create = BTtow.Create.towbar,
+                init = BTtow.Init.towbar,
+            }
+        }
+
+        /* -------------------------------------------------------
+         * Vanilla: Battery (from PZ Build 42)
+         * ------------------------------------------------------- */
+        part Battery
+        {
+            mechanicArea = Engine,
+            area = Engine,
+            itemType = Base.CarBattery,
+            mechanicRequireKey = true,
+            category = engine,
+            durability = 2,
+            table install
+            {
+                items
+                {
+                    1
+                    {
+                        tags = base:screwdriver,
+                        count = 1,
+                        keep = true,
+                        equip = primary,
+                    }
+                }
+                time = 100,
+                test = Vehicles.InstallTest.Default,
+                door = EngineDoor,
+            }
+            table uninstall
+            {
+                items
+                {
+                    1
+                    {
+                        tags = base:screwdriver,
+                        count = 1,
+                        keep = true,
+                        equip = primary,
+                    }
+                }
+                time = 100,
+                test = Vehicles.UninstallTest.Battery,
+            }
+            lua
+            {
+                create = Vehicles.Create.Battery,
+                update = Vehicles.Update.Battery,
+            }
+        }
+    }
+}
