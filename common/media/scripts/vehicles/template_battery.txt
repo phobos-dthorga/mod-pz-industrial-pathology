@@ -75,6 +75,7 @@ module Base
             lua
             {
                 create = PIP_Vehicle.Create.Appliance,
+                init = PIP_Vehicle.Init.Fridge,
                 update = PIP_Vehicle.Update.Fridge,
             }
         }
@@ -132,6 +133,7 @@ module Base
             lua
             {
                 create = PIP_Vehicle.Create.Appliance,
+                init = PIP_Vehicle.Init.Microwave,
                 update = PIP_Vehicle.Update.Microwave,
             }
         }

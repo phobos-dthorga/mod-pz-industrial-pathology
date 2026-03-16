@@ -28,6 +28,7 @@ require "PhobosLib"
 
 PIP_Vehicle = PIP_Vehicle or {}
 PIP_Vehicle.Create = PIP_Vehicle.Create or {}
+PIP_Vehicle.Init = PIP_Vehicle.Init or {}
 PIP_Vehicle.Update = PIP_Vehicle.Update or {}
 PIP_Vehicle.ContainerAccess = PIP_Vehicle.ContainerAccess or {}
 
@@ -90,6 +91,33 @@ function PIP_Vehicle.Create.Appliance(vehicle, part)
             maxTemp = 100,
         }
     end
+end
+
+
+---------------------------------------------------------------
+-- Part callbacks: Init (runs on vehicle load / game start)
+-- Sets container type and custom display name.
+-- Mirrors Transcontinental's Init pattern.
+---------------------------------------------------------------
+
+local function updateContainerTypeAndName(part, containerType, displayKey)
+    local container = part:getItemContainer()
+    if not container then return end
+    container:setType(containerType)
+    container:setCustomName(getText(displayKey))
+end
+
+function PIP_Vehicle.Init.Fridge(vehicle, part)
+    if not part then return end
+    local md = part:getModData()
+    local sysData = md and md.PIP_ApplianceData
+    local containerType = (sysData and sysData.isFreezer) and "freezer" or "fridge"
+    updateContainerTypeAndName(part, containerType, "IGUI_VehiclePartPIPLabFridge")
+end
+
+function PIP_Vehicle.Init.Microwave(vehicle, part)
+    if not part then return end
+    updateContainerTypeAndName(part, "microwave", "IGUI_VehiclePartPIPLabMicrowave")
 end
 
 
