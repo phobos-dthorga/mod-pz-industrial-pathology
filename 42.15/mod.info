@@ -1,0 +1,12 @@
+name=Phobos' Industrial Pathways: Pathology
+id=PhobosIndustrialPathology
+description=Biological specimen acquisition and processing for Project Zomboid Build 42. Core pillars: cadaver processing, specimen extractions, biohazard handling, laboratory analysis, and pathogen research. Focuses on virology and pathology rather than general chemistry. Requires PhobosLib.
+poster=poster.png
+icon=icon.png
+url=
+authors=phobosgekko
+versionMin=42.15.0
+modversion=0.1.0
+require=\PhobosLib
+loadModAfter=\PhobosLib,\PhobosChemistryPathways,\ZScienceSkill,\EHR,\DynamicTradingCommon,\MoodleFramework
+category=features
