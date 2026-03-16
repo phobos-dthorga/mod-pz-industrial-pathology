@@ -33,6 +33,9 @@ globals = {
     "PIP_Sandbox",
     "PIP_Autopsy",
     "PIP_Vehicle",
+
+    -- ZVV globals (mutated by RV Bridge cache update)
+    "LabModEngine",
 }
 
 read_globals = {
@@ -73,7 +76,6 @@ read_globals = {
     -- ZVV (Zombie Virus Vaccine) — optional, runtime-guarded
     "morgueTable",
     "LabActionMakeAutopsy",
-    "LabModEngine",
     "LabRecipes_GetBedObjects",
     "LabRecipes_CreateCorpseAutopsyTooltip",
     "LabRecipes_WMOnCorpseAutopsy",
