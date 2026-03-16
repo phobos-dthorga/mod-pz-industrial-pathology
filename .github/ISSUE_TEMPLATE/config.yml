@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Steam Workshop
+    url: https://steamcommunity.com/sharedfiles/filedetails/?id=3686101131
+    about: Subscribe, rate, and discuss on Steam Workshop
+  - name: PhobosLib (dependency) on Steam Workshop
+    url: https://steamcommunity.com/sharedfiles/filedetails/?id=3668598865
+    about: Required dependency — subscribe to PhobosLib if you haven't already

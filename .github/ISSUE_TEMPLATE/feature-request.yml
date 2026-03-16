@@ -1,0 +1,40 @@
+name: Feature Request
+description: Suggest a new specimen, processing method, or system
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What would you like to see added?
+      description: Describe the feature, specimen type, or processing system you are suggesting.
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: What area does this relate to?
+      options:
+        - Cadaver processing
+        - Specimen extraction
+        - Biohazard handling
+        - Laboratory analysis
+        - Pathogen research
+        - New sandbox option
+        - Cross-mod compatibility
+        - UI / tooltip / translation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Why is this useful?
+      description: How does this fit into the mod's virology/pathology theme?
+  - type: textarea
+    id: implementation
+    attributes:
+      label: Implementation ideas (optional)
+      description: |
+        If you have thoughts on how this could work
+        (recipe inputs/outputs, skill requirements, sandbox gating), share them here.

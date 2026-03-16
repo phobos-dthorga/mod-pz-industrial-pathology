@@ -42,6 +42,15 @@ luac.out
 # Private development notes
 MEMORY.md
 
+# Source art (1024x1024 PNGs) — stored on art-assets branch
+42/media/textures/Image_PIP_*.png
+
+# Generated furniture sprite intermediates
+scripts/sprite_output/
+
+# Tilesheet source PNGs (compiled to .pack for distribution)
+common/media/texturepacks/*_src.png
+
 # IDE / editor files
 .vscode/
 .idea/

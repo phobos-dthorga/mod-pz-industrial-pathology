@@ -1,0 +1,55 @@
+[h1]Phobos' Industrial Pathways: Pathology[/h1]
+
+[b]Version:[/b] 0.1.0
+[b]Requires:[/b] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3668598865]PhobosLib[/url]
+[b]PZ Version:[/b] Build 42.15.0+
+
+[hr][/hr]
+
+Biological specimen acquisition and processing for Project Zomboid Build 42. Core pillars: cadaver processing, specimen extractions, biohazard handling, laboratory analysis, and pathogen research. Focuses on virology and pathology rather than general chemistry.
+
+[h2]Features (v0.1.0)[/h2]
+
+[h3]Proximity Autopsy Table[/h3]
+Right-click near corpses within range of a [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3399491432]Zombie Virus Vaccine[/url] Autopsy Table to perform table-quality autopsies without manually placing corpses. The context menu lists all nearby corpses with full ZVV tooltip info (freshness, zombie status, organs, equipment).
+
+[h3]RV Bridge Remote Autopsy[/h3]
+If no local autopsy table is found but a [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3371837498]PROJECT RV Interior[/url] vehicle with a morgue table is parked nearby, offers "Autopsy (RV Lab Table)" to relay the autopsy through the RV's table. Just visit your RV interior once to register the table — it stays cached even after exiting.
+
+[h2]Sandbox Options[/h2]
+
+[list]
+[*] [b]Enable Proximity Autopsy[/b] (default: on) — Toggle the proximity table context menu
+[*] [b]Autopsy Table Range[/b] (default: 3, range: 1–6) — Tile radius for detecting nearby tables
+[*] [b]Enable RV Bridge[/b] (default: on) — Toggle the RV Bridge remote autopsy feature
+[*] [b]RV Vehicle Search Range[/b] (default: 5, range: 1–10) — Tile radius for detecting nearby RVs
+[*] [b]Enable Debug Logging[/b] (default: off) — Verbose console output for troubleshooting
+[/list]
+
+[h2]Dependencies[/h2]
+
+[b]Required:[/b]
+[list]
+[*] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3668598865]PhobosLib[/url] — Shared utility library
+[/list]
+
+[b]Optional (soft dependencies):[/b]
+[list]
+[*] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3399491432]Zombie Virus Vaccine[/url] (ZVV) — Provides the autopsy system and morgue table
+[*] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3371837498]PROJECT RV Interior[/url] — RV interior rooms for the RV Bridge feature
+[/list]
+
+[h2]Compatibility[/h2]
+
+PIP is designed for cross-mod harmony. All soft dependencies are runtime-detected — installing PIP without ZVV or the RV mod will not cause errors; those features simply won't appear.
+
+[h2]Source Code[/h2]
+
+[url=https://github.com/phobos-dthorga/mod-pz-industrial-pathology]GitHub Repository[/url]
+
+[h2]Licensing[/h2]
+
+[list]
+[*] Code: MIT License
+[*] Assets: CC BY-NC-SA 4.0
+[/list]

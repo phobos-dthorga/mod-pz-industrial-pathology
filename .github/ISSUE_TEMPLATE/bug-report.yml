@@ -1,0 +1,75 @@
+name: Bug Report
+description: Something is not working correctly in-game
+labels: ["bug"]
+body:
+  - type: input
+    id: mod-version
+    attributes:
+      label: Mod Version
+      description: Which version of PIP are you running?
+      placeholder: "e.g. 0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: pz-version
+    attributes:
+      label: PZ Build Version
+      description: Which Project Zomboid build are you on?
+      placeholder: "e.g. 42.15.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: multiplayer
+    attributes:
+      label: Singleplayer or Multiplayer?
+      options:
+        - Singleplayer
+        - Multiplayer (host)
+        - Multiplayer (client)
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe what went wrong. Include the feature (proximity autopsy, RV bridge, etc.) if relevant.
+      placeholder: "When I right-click near a corpse and autopsy table, the menu..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should have happened?
+      description: What did you expect to happen instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: How can we trigger this bug?
+      placeholder: |
+        1. Place autopsy table
+        2. Find a corpse nearby
+        3. Right-click near corpse
+        4. See error
+  - type: textarea
+    id: console-log
+    attributes:
+      label: Console log errors
+      description: |
+        Paste any relevant errors from console.txt
+        (found in C:\Users\[you]\Zomboid\ on Windows).
+      render: shell
+  - type: textarea
+    id: mod-list
+    attributes:
+      label: Other mods installed
+      description: List other mods that might be relevant (especially Zombie Virus Vaccine, PROJECT RV Interior, PhobosLib).
+  - type: textarea
+    id: sandbox-settings
+    attributes:
+      label: Relevant sandbox settings
+      description: |
+        If the bug involves sandbox options (autopsy table range, RV bridge,
+        etc.), note which are enabled and their values.
