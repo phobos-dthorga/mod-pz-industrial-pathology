@@ -42,13 +42,6 @@ local _prereqLogged = false
 --- Check all shared prerequisites for PIP autopsy features.
 ---@return boolean
 local function arePrerequisitesMet()
-    if not PhobosLib.isExperimentalEnabled() then
-        if not _prereqLogged then
-            PhobosLib.debug("PIP", "Prereq", "Experimental features disabled")
-            _prereqLogged = true
-        end
-        return false
-    end
     if not PIP_Sandbox.isProximityAutopsyEnabled() then
         if not _prereqLogged then
             PhobosLib.debug("PIP", "Prereq", "Proximity autopsy disabled in sandbox")
