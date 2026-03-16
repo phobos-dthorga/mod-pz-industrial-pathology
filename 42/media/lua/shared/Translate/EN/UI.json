@@ -13,5 +13,7 @@
     "UI_PIP_SetFreezer": "Set to Freezer",
     "UI_PIP_FridgeMode": "Fridge Mode",
     "UI_PIP_FreezerMode": "Freezer Mode",
-    "UI_PIP_ApplianceOff": "Off"
+    "UI_PIP_ApplianceOff": "Off",
+    "IGUI_VehiclePartPIPLabFridge": "Portable Lab Fridge",
+    "IGUI_VehiclePartPIPLabMicrowave": "Portable Lab Microwave"
 }
