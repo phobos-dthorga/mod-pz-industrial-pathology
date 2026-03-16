@@ -35,38 +35,27 @@ PIP_TimedActionRemoteAutopsy = ISBaseTimedAction:derive("PIP_TimedActionRemoteAu
 
 
 --- Calculate the action duration matching ZVV's table autopsy speed.
---- Falls back to reasonable defaults if ZVV sandbox functions are unavailable.
+--- Mirrors ZVV's LabActionMakeAutopsy:getDuration() logic exactly.
 ---@param character any
 ---@return number  ticks
 local function calculateDuration(character)
-    -- ZVV table autopsy: base speed - (table bonus %) - (skill reduction)
-    local baseSpeed = 1200  -- ZVV default
-    local tableBonus = 6    -- ZVV default TableSpeedBonus (enum 0-6, value * 10 = %)
+    local LabSandboxOptions = require "Util/LabSandboxOptions"
 
-    -- Try to read ZVV's sandbox options
-    local ok, opts = pcall(require, "Util/LabSandboxOptions")
-    if ok and opts then
-        local sok, base = pcall(function() return opts.GetAutopsyBaseSpeed() end)
-        if sok and base then baseSpeed = base end
-        local tok, bonus = pcall(function() return opts.GetTableSpeedBonus() end)
-        if tok and bonus then tableBonus = bonus end
-    end
+    -- Base autopsy speed from sandbox
+    local duration = LabSandboxOptions.GetAutopsyBaseSpeed()
 
-    -- Table bonus: enum value * 10% reduction
-    local bonusPct = tableBonus * 10
-    local duration = baseSpeed * (1 - bonusPct / 100)
-
-    -- Skill reduction: ZVV reduces by TicksDecreasedByPerkLv per Doctor level
+    -- Skill reduction: fewer ticks per Doctor perk level (ZVV skips level 0-1)
     if character then
-        local ticksPerLevel = 30  -- ZVV default
-        if ok and opts then
-            local tok2, tpl = pcall(function() return opts.GetTicksDecreasedByPerkLv() end)
-            if tok2 and tpl then ticksPerLevel = tpl end
+        local doctorLevel = character:getPerkLevel(Perks.Doctor)
+        if doctorLevel > 1 then
+            local ticksPerLevel = LabSandboxOptions.GetTicksDecreasedByPerkLevel()
+            duration = duration - ((doctorLevel - 1) * ticksPerLevel)
         end
-        local doctorLevel = 0
-        pcall(function() doctorLevel = character:getPerkLevel(Perks.Doctor) end)
-        duration = duration - (ticksPerLevel * doctorLevel)
     end
+
+    -- Table speed bonus (GetTableSpeedBonusPercent already returns a percentage)
+    local bonusPercent = LabSandboxOptions.GetTableSpeedBonusPercent()
+    duration = math.floor(duration * (1.0 - bonusPercent / 100))
 
     -- RLP trait modifier (if Research Lab Intern Profession is installed)
     if _G.RLPTraitEffects and character then
