@@ -33,6 +33,11 @@ globals = {
     "PIP_Sandbox",
     "PIP_Autopsy",
     "PIP_RVBridge",
+    "PIP_EquipmentCheck",
+    "PIP_TimedActionRemoteAutopsy",
+    "PIP_TimedActionRemoteGetRemains",
+    "PIP_TimedActionRemoteCollectPart",
+    "PIP_TimedActionRemoteClearTable",
 
     -- ZVV globals (mutated by RV Bridge cache update)
     "LabModEngine",
@@ -41,6 +46,9 @@ globals = {
 read_globals = {
     -- PhobosLib (loaded via require)
     "PhobosLib",
+
+    -- ZVV shared globals (read-only)
+    "LabConst",
 
     -- PZ Lua classes (not in JavaDocs — pure Lua, must stay manual)
     "ISBaseTimedAction",
