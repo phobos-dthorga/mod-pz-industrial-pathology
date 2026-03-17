@@ -1,20 +1,29 @@
 [h1]Phobos' Industrial Pathways: Pathology[/h1]
 
-[b]Version:[/b] 0.1.0
+[b]Version:[/b] 0.3.0
 [b]Requires:[/b] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3668598865]PhobosLib[/url]
 [b]PZ Version:[/b] Build 42.15.0+
 
 [hr][/hr]
 
-Biological specimen acquisition and processing for Project Zomboid Build 42. Core pillars: cadaver processing, specimen extractions, biohazard handling, laboratory analysis, and pathogen research. Focuses on virology and pathology rather than general chemistry.
+Biological specimen acquisition and processing for Project Zomboid Build 42. Perform autopsies, extract body parts, and clean up — all without needing to enter your RV. Core pillars: cadaver processing, specimen extractions, biohazard handling, laboratory analysis, and pathogen research.
 
-[h2]Features (v0.1.0)[/h2]
+[h2]Features[/h2]
 
 [h3]Proximity Autopsy Table[/h3]
 Right-click near corpses within range of a [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3399491432]Zombie Virus Vaccine[/url] Autopsy Table to perform table-quality autopsies without manually placing corpses. The context menu lists all nearby corpses with full ZVV tooltip info (freshness, zombie status, organs, equipment).
 
 [h3]RV Bridge Remote Autopsy[/h3]
 If no local autopsy table is found but a [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3371837498]PROJECT RV Interior[/url] vehicle with a morgue table is parked nearby, offers "Autopsy (RV Lab Table)" to relay the autopsy through the RV's table. Just visit your RV interior once to register the table — it stays cached even after exiting.
+
+[h3]Secondary Extractions (v0.2.0)[/h3]
+After autopsy, the table transitions to "Has Remains" state. Right-click to access a submenu for extracting body parts (brain, bones, skull, teeth), bagging remains, and cleaning the table — all through the RV Bridge without entering the vehicle.
+
+[h3]Recursive Inventory Search (v0.3.0)[/h3]
+Equipment checks now search equipped bags and backpacks. No need to move tools to your main inventory — if you have a scalpel in your backpack, PIP will find it.
+
+[h3]Area Safety Gates (v0.3.0)[/h3]
+RV Bridge actions are gated by zombie proximity. Context menu options appear greyed out with "You sense danger nearby" when zombies are visible, chasing, or very close. Timed actions cancel mid-progress if zombies appear — mirrors vanilla sleep safety checks.
 
 [h2]Sandbox Options[/h2]
 
