@@ -89,6 +89,7 @@ end
 
 function PIP_TimedActionRemoteAutopsy:isValid()
     if not self.character or self.character:isDead() then return false end
+    if not PhobosLib.isAreaSafe(self.character) then return false end
     if not self.corpse then return false end
     -- Verify corpse still exists on its square
     local sq = self.corpseSquare

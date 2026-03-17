@@ -111,6 +111,42 @@ end
 
 
 ---------------------------------------------------------------
+-- Area safety gate (RV Bridge only)
+---------------------------------------------------------------
+
+--- Apply area safety gate to a context menu option.
+--- If the area is NOT safe (zombies nearby), greys out the option
+--- and prepends a RED safety warning to the tooltip.
+--- Only used for RV Bridge path — proximity path delegates to ZVV.
+---@param opt any           ISContextMenu option
+---@param player any        IsoPlayer
+---@return boolean          true if area is safe, false if gated
+local function applySafetyGate(opt, player)
+    if PhobosLib.isAreaSafe(player) then return true end
+
+    opt.notAvailable = true
+
+    -- Ensure tooltip exists
+    if not opt.toolTip then
+        local tooltip = ISToolTip:new()
+        tooltip:initialise()
+        tooltip:setVisible(false)
+        tooltip.description = ""
+        opt.toolTip = tooltip
+    end
+
+    -- Prepend safety warning in RED
+    local safetyLine = string.format(
+        "<RED> %s <RGB:1,1,1> <LINE> <RGB:0.6,0.6,0.6> %s <RGB:1,1,1> <LINE> ",
+        getText("UI_PIP_AreaNotSafe"),
+        getText("UI_PIP_AreaNotSafe_Tooltip")
+    )
+    opt.toolTip.description = safetyLine .. (opt.toolTip.description or "")
+    return false
+end
+
+
+---------------------------------------------------------------
 -- Corpse highlighting callback (reused by both paths)
 ---------------------------------------------------------------
 
@@ -201,6 +237,11 @@ local function addCorpseOption(subMenu, player, corpse, corpseSq, inv, tableStat
         opt.notAvailable = true
     end
 
+    -- RV Bridge: area safety gate (zombies nearby → greyed out)
+    if isRemote then
+        applySafetyGate(opt, player)
+    end
+
     PhobosLib.debug("PIP", "CorpseOption", "Added corpse option: zombie=" .. tostring(zombie)
         .. " fresh=" .. tostring(not notFresh) .. " autopsied=" .. tostring(notOrgans)
         .. " tableReady=" .. tostring(not tableNotReady)
@@ -271,6 +312,7 @@ local function addRemainsMenu(context, player, inv, remoteResult, worldobjects)
     PIP_EquipmentCheck.appendContainerTooltip(grTip, grSack, grPlastics)
     grOpt.toolTip = grTip
     if not getRemainsOk then grOpt.notAvailable = true end
+    applySafetyGate(grOpt, player)
 
     -- "Collect Body Parts" submenu
     local cpOk, cpScalpel, cpSaw, cpSack, cpPlastics = PIP_EquipmentCheck.checkCollectPart(inv)
@@ -294,6 +336,7 @@ local function addRemainsMenu(context, player, inv, remoteResult, worldobjects)
         PIP_EquipmentCheck.appendCollectPartTooltip(partTip, cpScalpel, cpSaw, cpSack, cpPlastics)
         partOpt.toolTip = partTip
         if not cpOk then partOpt.notAvailable = true end
+        applySafetyGate(partOpt, player)
     end
 
     PhobosLib.debug("PIP", "RVMenu", "Added Remains menu: getRemains=" .. tostring(getRemainsOk)
@@ -332,6 +375,7 @@ local function addDirtyMenu(context, player, inv, remoteResult, worldobjects)
     PIP_EquipmentCheck.appendClearTableTooltip(clearTip, hasBleach, hasRag)
     clearOpt.toolTip = clearTip
     if not clearOk then clearOpt.notAvailable = true end
+    applySafetyGate(clearOpt, player)
 
     PhobosLib.debug("PIP", "RVMenu", "Added Dirty menu: clearOk=" .. tostring(clearOk))
 end

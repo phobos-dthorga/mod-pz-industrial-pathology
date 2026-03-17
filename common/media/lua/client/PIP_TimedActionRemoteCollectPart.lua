@@ -49,6 +49,7 @@ end
 
 function PIP_TimedActionRemoteCollectPart:isValid()
     if not self.character or self.character:isDead() then return false end
+    if not PhobosLib.isAreaSafe(self.character) then return false end
     if not self.itemType then return false end
     local inv = self.character:getInventory()
     local ok = PIP_EquipmentCheck.checkCollectPart(inv)

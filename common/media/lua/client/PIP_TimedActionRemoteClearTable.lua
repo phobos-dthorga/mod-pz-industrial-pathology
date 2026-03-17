@@ -48,6 +48,7 @@ end
 
 function PIP_TimedActionRemoteClearTable:isValid()
     if not self.character or self.character:isDead() then return false end
+    if not PhobosLib.isAreaSafe(self.character) then return false end
     local inv = self.character:getInventory()
     local ok = PIP_EquipmentCheck.checkClearTable(inv)
     return ok
@@ -87,7 +88,7 @@ function PIP_TimedActionRemoteClearTable:complete()
     -- Consume bleach client-side (0.2L) — server handler won't double-drain
     -- if we don't pass bleachType in args
     local inv = self.character:getInventory()
-    local bleachItem = PhobosLib.findFluidContainerWithMin(inv, {"Bleach", "CleaningLiquid"}, 0.2)
+    local bleachItem = PhobosLib.findFluidContainerWithMinRecurse(inv, {"Bleach", "CleaningLiquid"}, 0.2)
     if bleachItem then
         local fc = PhobosLib.tryGetFluidContainer(bleachItem)
         if fc then

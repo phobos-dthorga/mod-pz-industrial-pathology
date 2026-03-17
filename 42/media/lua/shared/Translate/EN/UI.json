@@ -24,5 +24,7 @@
     "UI_PIP_Scalpel": "Scalpel",
     "UI_PIP_Saw": "Saw",
     "UI_PIP_BleachOrCleaner": "Bleach / Cleaning Liquid (0.2)",
-    "UI_PIP_Rag": "Dish Cloth / Bath Towel"
+    "UI_PIP_Rag": "Dish Cloth / Bath Towel",
+    "UI_PIP_AreaNotSafe": "You sense danger nearby.",
+    "UI_PIP_AreaNotSafe_Tooltip": "Cannot perform this action while zombies are nearby."
 }

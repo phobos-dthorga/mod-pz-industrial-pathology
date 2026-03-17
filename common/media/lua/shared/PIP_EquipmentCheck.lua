@@ -79,54 +79,59 @@ end
 ---------------------------------------------------------------
 
 --- Check if the player has a sack OR at least 2 plastic bags.
+--- Searches main inventory + equipped bags/backpacks (recursive).
 ---@param inv any  ItemContainer
 ---@return boolean hasSack
 ---@return boolean hasTwoPlastics
 ---@return boolean anyOk  true if either condition met
 function PIP_EquipmentCheck.hasSackOrPlastics(inv)
     if not inv then return false, false, false end
-    local hasSack = PhobosLib.findItemFromTypeList(inv, PIP_EquipmentCheck.getSackTypes()) ~= nil
-    local plasticCount = PhobosLib.countItemsFromTypeList(inv, PIP_EquipmentCheck.getPlasticTypes())
+    local hasSack = PhobosLib.findItemFromTypeListRecurse(inv, PIP_EquipmentCheck.getSackTypes()) ~= nil
+    local plasticCount = PhobosLib.countItemsFromTypeListRecurse(inv, PIP_EquipmentCheck.getPlasticTypes())
     local hasTwoPlastics = plasticCount >= 2
     return hasSack, hasTwoPlastics, (hasSack or hasTwoPlastics)
 end
 
 --- Check if the player has a non-broken scalpel.
+--- Searches main inventory + equipped bags/backpacks (recursive).
 ---@param inv any  ItemContainer
 ---@return boolean
 function PIP_EquipmentCheck.hasScalpel(inv)
     if not inv then return false end
-    local item = PhobosLib.findItemByFullType(inv, "Base.Scalpel")
+    local item = PhobosLib.findItemByFullTypeRecurse(inv, "Base.Scalpel")
     if not item then return false end
     local cond = PhobosLib.getItemCondition(item)
     return cond and cond > 0
 end
 
 --- Check if the player has a non-broken saw.
+--- Searches main inventory + equipped bags/backpacks (recursive).
 ---@param inv any  ItemContainer
 ---@return boolean
 function PIP_EquipmentCheck.hasSaw(inv)
     if not inv then return false end
-    local item = PhobosLib.findItemByFullType(inv, "Base.Saw")
+    local item = PhobosLib.findItemByFullTypeRecurse(inv, "Base.Saw")
     if not item then return false end
     local cond = PhobosLib.getItemCondition(item)
     return cond and cond > 0
 end
 
 --- Check if the player has bleach or cleaning liquid (≥0.2 litres).
+--- Searches main inventory + equipped bags/backpacks (recursive).
 ---@param inv any  ItemContainer
 ---@return boolean
 function PIP_EquipmentCheck.hasBleach(inv)
     if not inv then return false end
-    return PhobosLib.findFluidContainerWithMin(inv, {"Bleach", "CleaningLiquid"}, 0.2) ~= nil
+    return PhobosLib.findFluidContainerWithMinRecurse(inv, {"Bleach", "CleaningLiquid"}, 0.2) ~= nil
 end
 
 --- Check if the player has a cleaning rag (dish cloth or bath towel).
+--- Searches main inventory + equipped bags/backpacks (recursive).
 ---@param inv any  ItemContainer
 ---@return boolean
 function PIP_EquipmentCheck.hasRag(inv)
     if not inv then return false end
-    return PhobosLib.findItemFromTypeList(inv, PIP_EquipmentCheck.getCleaningToolTypes()) ~= nil
+    return PhobosLib.findItemFromTypeListRecurse(inv, PIP_EquipmentCheck.getCleaningToolTypes()) ~= nil
 end
 
 
