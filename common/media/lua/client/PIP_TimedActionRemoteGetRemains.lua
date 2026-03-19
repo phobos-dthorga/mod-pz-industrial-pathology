@@ -25,6 +25,7 @@
 
 require "TimedActions/ISBaseTimedAction"
 require "PhobosLib"
+require "PIP_Constants"
 require "PIP_RVBridge"
 require "PIP_EquipmentCheck"
 
@@ -38,7 +39,7 @@ PIP_TimedActionRemoteGetRemains = ISBaseTimedAction:derive("PIP_TimedActionRemot
 function PIP_TimedActionRemoteGetRemains:new(character, remoteTableData)
     local o = ISBaseTimedAction.new(self, character)
     o.remoteTableData = remoteTableData
-    o.maxTime = 160  -- matches ZVV's LabActionMorgueTableGetRemains
+    o.maxTime = PIP_Constants.ACTION_TIME_GET_REMAINS
     o.stopOnWalk = true
     o.stopOnRun = true
     return o
@@ -101,14 +102,7 @@ function PIP_TimedActionRemoteGetRemains:complete()
     )
 
     -- Optimistic cache update: Remains → Dirty
-    if rd.rvData and rd.rvData.vehicleId then
-        PIP_RVBridge.cacheTableLocation(self.character, rd.rvData.vehicleId, {
-            topX   = rd.remoteTopX,
-            topY   = rd.remoteTopY,
-            topZ   = rd.remoteTopZ,
-            status = "Dirty",
-        })
-    end
+    PIP_RVBridge.optimisticCacheUpdate(self.character, rd, PIP_Constants.TABLE_DIRTY)
 
     PhobosLib.debug("PIP", "RemoteGetRemains", "Relayed GetRemains to ZVV"
         .. " sack=" .. tostring(hasSack) .. " plastics=" .. tostring(hasTwoPlastics))

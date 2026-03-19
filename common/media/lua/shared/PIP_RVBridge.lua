@@ -268,3 +268,36 @@ local function onTick()
 end
 
 Events.OnTick.Add(onTick)
+
+
+---------------------------------------------------------------
+-- Timed action helpers (shared by all PIP_TimedAction* modules)
+---------------------------------------------------------------
+
+--- Stop and clear the looping sound on a timed action.
+--- ISBaseTimedAction does NOT provide this — each action must handle its own.
+--- Call from both :stop() and :perform() methods.
+---@param action table  The ISBaseTimedAction instance (must have .sound and .character)
+function PIP_RVBridge.stopActionSound(action)
+    if action.sound and action.character:getEmitter():isPlaying(action.sound) then
+        action.character:getEmitter():stopSound(action.sound)
+        action.sound = nil
+    end
+end
+
+--- Optimistic cache update for timed action completion.
+--- Updates the cached table status without waiting for a server round-trip.
+---@param character any            IsoPlayer
+---@param remoteTableData table    From PIP_Autopsy.findRemoteTableViaRV()
+---@param newStatus string         New status (use PIP_Constants.TABLE_*)
+function PIP_RVBridge.optimisticCacheUpdate(character, remoteTableData, newStatus)
+    local rd = remoteTableData
+    if rd and rd.rvData and rd.rvData.vehicleId then
+        PIP_RVBridge.cacheTableLocation(character, rd.rvData.vehicleId, {
+            topX   = rd.remoteTopX,
+            topY   = rd.remoteTopY,
+            topZ   = rd.remoteTopZ,
+            status = newStatus,
+        })
+    end
+end

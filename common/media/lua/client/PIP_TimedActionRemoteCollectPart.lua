@@ -25,6 +25,7 @@
 
 require "TimedActions/ISBaseTimedAction"
 require "PhobosLib"
+require "PIP_Constants"
 require "PIP_RVBridge"
 require "PIP_EquipmentCheck"
 
@@ -40,7 +41,7 @@ function PIP_TimedActionRemoteCollectPart:new(character, remoteTableData, itemTy
     local o = ISBaseTimedAction.new(self, character)
     o.remoteTableData = remoteTableData
     o.itemType = itemType
-    o.maxTime = 220  -- matches ZVV's LabActionMorgueTableCollectPart
+    o.maxTime = PIP_Constants.ACTION_TIME_COLLECT_PART
     o.stopOnWalk = true
     o.stopOnRun = true
     return o
@@ -74,19 +75,13 @@ end
 
 
 function PIP_TimedActionRemoteCollectPart:stop()
-    if self.sound and self.character:getEmitter():isPlaying(self.sound) then
-        self.character:getEmitter():stopSound(self.sound)
-        self.sound = nil
-    end
+    PIP_RVBridge.stopActionSound(self)
     ISBaseTimedAction.stop(self)
 end
 
 
 function PIP_TimedActionRemoteCollectPart:perform()
-    if self.sound and self.character:getEmitter():isPlaying(self.sound) then
-        self.character:getEmitter():stopSound(self.sound)
-        self.sound = nil
-    end
+    PIP_RVBridge.stopActionSound(self)
     ISBaseTimedAction.perform(self)
 end
 
@@ -113,14 +108,7 @@ function PIP_TimedActionRemoteCollectPart:complete()
     )
 
     -- Optimistic cache update: Remains → Dirty
-    if rd.rvData and rd.rvData.vehicleId then
-        PIP_RVBridge.cacheTableLocation(self.character, rd.rvData.vehicleId, {
-            topX   = rd.remoteTopX,
-            topY   = rd.remoteTopY,
-            topZ   = rd.remoteTopZ,
-            status = "Dirty",
-        })
-    end
+    PIP_RVBridge.optimisticCacheUpdate(self.character, rd, PIP_Constants.TABLE_DIRTY)
 
     PhobosLib.debug("PIP", "RemoteCollectPart", "Relayed CollectBodyPart to ZVV"
         .. " itemType=" .. tostring(self.itemType)

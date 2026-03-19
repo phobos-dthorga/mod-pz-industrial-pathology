@@ -26,6 +26,7 @@
 ---------------------------------------------------------------
 
 require "PhobosLib"
+require "PIP_Constants"
 
 PIP_EquipmentCheck = PIP_EquipmentCheck or {}
 
@@ -122,7 +123,7 @@ end
 ---@return boolean
 function PIP_EquipmentCheck.hasBleach(inv)
     if not inv then return false end
-    return PhobosLib.findFluidContainerWithMinRecurse(inv, {"Bleach", "CleaningLiquid"}, 0.2) ~= nil
+    return PhobosLib.findFluidContainerWithMinRecurse(inv, {"Bleach", "CleaningLiquid"}, PIP_Constants.BLEACH_DRAIN_AMOUNT) ~= nil
 end
 
 --- Check if the player has a cleaning rag (dish cloth or bath towel).

@@ -32,6 +32,7 @@ ignore = {
 globals = {
     "PIP_Sandbox",
     "PIP_Autopsy",
+    "PIP_Constants",
     "PIP_RVBridge",
     "PIP_EquipmentCheck",
     "PIP_TimedActionRemoteAutopsy",

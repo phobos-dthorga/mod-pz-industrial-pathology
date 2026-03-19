@@ -26,6 +26,7 @@
 
 require "TimedActions/ISBaseTimedAction"
 require "PhobosLib"
+require "PIP_Constants"
 require "PIP_RVBridge"
 require "PIP_EquipmentCheck"
 
@@ -39,7 +40,7 @@ PIP_TimedActionRemoteClearTable = ISBaseTimedAction:derive("PIP_TimedActionRemot
 function PIP_TimedActionRemoteClearTable:new(character, remoteTableData)
     local o = ISBaseTimedAction.new(self, character)
     o.remoteTableData = remoteTableData
-    o.maxTime = 150  -- matches ZVV's LabActionMorgueTableClear
+    o.maxTime = PIP_Constants.ACTION_TIME_CLEAR_TABLE
     o.stopOnWalk = true
     o.stopOnRun = true
     return o
@@ -88,11 +89,11 @@ function PIP_TimedActionRemoteClearTable:complete()
     -- Consume bleach client-side (0.2L) — server handler won't double-drain
     -- if we don't pass bleachType in args
     local inv = self.character:getInventory()
-    local bleachItem = PhobosLib.findFluidContainerWithMinRecurse(inv, {"Bleach", "CleaningLiquid"}, 0.2)
+    local bleachItem = PhobosLib.findFluidContainerWithMinRecurse(inv, {"Bleach", "CleaningLiquid"}, PIP_Constants.BLEACH_DRAIN_AMOUNT)
     if bleachItem then
         local fc = PhobosLib.tryGetFluidContainer(bleachItem)
         if fc then
-            PhobosLib.tryDrainFluid(fc, 0.2)
+            PhobosLib.tryDrainFluid(fc, PIP_Constants.BLEACH_DRAIN_AMOUNT)
         end
     end
 
@@ -108,14 +109,7 @@ function PIP_TimedActionRemoteClearTable:complete()
     )
 
     -- Optimistic cache update: Dirty → Empty
-    if rd.rvData and rd.rvData.vehicleId then
-        PIP_RVBridge.cacheTableLocation(self.character, rd.rvData.vehicleId, {
-            topX   = rd.remoteTopX,
-            topY   = rd.remoteTopY,
-            topZ   = rd.remoteTopZ,
-            status = "Empty",
-        })
-    end
+    PIP_RVBridge.optimisticCacheUpdate(self.character, rd, PIP_Constants.TABLE_EMPTY)
 
     PhobosLib.debug("PIP", "RemoteClearTable", "Relayed ClearTable to ZVV")
 end

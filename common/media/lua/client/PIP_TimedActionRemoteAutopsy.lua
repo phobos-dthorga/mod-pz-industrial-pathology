@@ -28,6 +28,7 @@
 
 require "TimedActions/ISBaseTimedAction"
 require "PhobosLib"
+require "PIP_Constants"
 require "PIP_AutopsyProxy"
 require "PIP_RVBridge"
 
@@ -122,19 +123,13 @@ end
 
 
 function PIP_TimedActionRemoteAutopsy:stop()
-    if self.sound and self.character:getEmitter():isPlaying(self.sound) then
-        self.character:getEmitter():stopSound(self.sound)
-        self.sound = nil
-    end
+    PIP_RVBridge.stopActionSound(self)
     ISBaseTimedAction.stop(self)
 end
 
 
 function PIP_TimedActionRemoteAutopsy:perform()
-    if self.sound and self.character:getEmitter():isPlaying(self.sound) then
-        self.character:getEmitter():stopSound(self.sound)
-        self.sound = nil
-    end
+    PIP_RVBridge.stopActionSound(self)
     ISBaseTimedAction.perform(self)
 end
 
@@ -187,14 +182,7 @@ function PIP_TimedActionRemoteAutopsy:complete()
     )
 
     -- Optimistic cache update: Empty → Remains
-    if rd.rvData and rd.rvData.vehicleId then
-        PIP_RVBridge.cacheTableLocation(self.character, rd.rvData.vehicleId, {
-            topX   = rd.remoteTopX,
-            topY   = rd.remoteTopY,
-            topZ   = rd.remoteTopZ,
-            status = "Remains",
-        })
-    end
+    PIP_RVBridge.optimisticCacheUpdate(self.character, rd, PIP_Constants.TABLE_REMAINS)
 
     -- Update ZVV's client-side autopsy cache (prevents re-selecting this corpse)
     if not isServer() and corpseId and corpseX and corpseY and corpseZ then

@@ -24,6 +24,7 @@
 ---------------------------------------------------------------
 
 require "PhobosLib"
+require "PIP_Constants"
 
 PIP_Autopsy = PIP_Autopsy or {}
 
@@ -161,7 +162,7 @@ function PIP_Autopsy.findRemoteTableViaRV(player, vehicleRadius)
         PhobosLib.debug("PIP", "RVTableScan", "Using cached table at "
             .. cached.topX .. "," .. cached.topY .. " status=" .. tostring(cached.status))
         return {
-            status      = cached.status or "Empty",
+            status      = cached.status or PIP_Constants.TABLE_EMPTY,
             isRemote    = true,
             remoteTopX  = cached.topX,
             remoteTopY  = cached.topY,
@@ -173,7 +174,7 @@ function PIP_Autopsy.findRemoteTableViaRV(player, vehicleRadius)
     -- Strategy 2: Live scan (works if chunk is loaded, e.g. just exited RV)
     local roomSq = PIP_RVBridge.getRoomSquare(rvData.room)
     if roomSq then
-        local scanRadius = 8
+        local scanRadius = PIP_Constants.RV_INTERIOR_SCAN_RADIUS
         local best = nil
         local bestDist = math.huge
         local roomX, roomY = rvData.room.x, rvData.room.y

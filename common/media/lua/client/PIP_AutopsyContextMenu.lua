@@ -30,6 +30,7 @@
 ---------------------------------------------------------------
 
 require "PhobosLib"
+require "PIP_Constants"
 require "PIP_AutopsyProxy"
 require "PIP_SandboxIntegration"
 require "PIP_RVBridge"
@@ -386,7 +387,7 @@ end
 local function addCorpseStateInfo(context, worldobjects)
     local parent = context:addOption(getText("UI_PIP_RVLabTable"), worldobjects, nil)
     parent.notAvailable = true
-    local tip = makeStatusTooltip("Corpse", true)
+    local tip = makeStatusTooltip(PIP_Constants.TABLE_CORPSE, true)
     tip.description = tip.description .. getText("UI_PIP_TableStatus_Corpse_Info")
     parent.toolTip = tip
 end
@@ -420,7 +421,7 @@ local function onFillWorldObjectContextMenu(playerNum, context, worldobjects, te
         local tableResult = PIP_Autopsy.findNearbyMorgueTable(sq, range)
 
         if tableResult then
-            local tableNotReady = tableResult.status ~= "Empty"
+            local tableNotReady = tableResult.status ~= PIP_Constants.TABLE_EMPTY
             local parent = context:addOption(getText("UI_PIP_AutopsyWithTable"), worldobjects, nil)
             local subMenu = ISContextMenu:getNew(context)
             context:addSubMenu(parent, subMenu)
@@ -466,19 +467,19 @@ local function onFillWorldObjectContextMenu(playerNum, context, worldobjects, te
     -- Dispatch based on cached table status
     local status = remoteResult.status
 
-    if status == "Remains" then
+    if status == PIP_Constants.TABLE_REMAINS then
         -- Post-autopsy: offer extraction and collection options
         addRemainsMenu(context, player, inv, remoteResult, worldobjects)
 
-    elseif status == "Dirty" then
+    elseif status == PIP_Constants.TABLE_DIRTY then
         -- Post-extraction: offer table cleanup
         addDirtyMenu(context, player, inv, remoteResult, worldobjects)
 
-    elseif status == "Corpse" then
+    elseif status == PIP_Constants.TABLE_CORPSE then
         -- Corpse on table — can't do anything, show info
         addCorpseStateInfo(context, worldobjects)
 
-    elseif status == "Empty" then
+    elseif status == PIP_Constants.TABLE_EMPTY then
         -- Table is ready — show autopsy options if corpses nearby
         if #corpseEntries > 0 then
             local parent = context:addOption(getText("UI_PIP_AutopsyWithRVTable"), worldobjects, nil)
