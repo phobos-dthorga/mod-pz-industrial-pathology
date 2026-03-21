@@ -264,6 +264,9 @@ jobs:
           print("No invalid prefixes found in JSON translation files.")
           PYEOF
 
+      - name: PZ API deny-list scan
+        run: python3 .github/pz-api-denylist.py common/media/lua/
+
       - name: Encoding check (UTF-8)
         run: |
           FAIL=0
