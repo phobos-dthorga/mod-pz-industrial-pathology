@@ -15,29 +15,16 @@
  \________________________________________________________________________/
 -->
 
-# PhobosIndustrialPathology -- Documentation
+# Architecture
 
-## Guides
+Technical documentation for PIP internals. This section will grow as the mod's feature set develops.
 
-| Document | Description |
-|----------|-------------|
-| [Getting Started](guides/getting-started.md) | Player quickstart -- what PIP is, how to install, first steps |
-| [FAQ](guides/faq.md) | Frequently asked questions |
-| [Troubleshooting](guides/troubleshooting.md) | Common issues and solutions |
+## Overview
 
-## Architecture
+PIP is in early development (v0.1.0). Architecture diagrams, API reference, and specimen processing pipeline documentation will be added as modules are implemented.
 
-| Document | Description |
-|----------|-------------|
-| [Architecture Overview](architecture/README.md) | Technical documentation and internal references |
+## References
 
-## Steam Workshop
-
-| Document | Description |
-|----------|-------------|
-| [Workshop Description](steam-workshop-description.bbcode) | BBCode description for the Steam Workshop listing |
-| [Workshop Changelog](steam-workshop-changelog.bbcode) | BBCode changelog for Steam Workshop updates |
-
-## Project
-
-For the full module reference, see the [project README](../README.md#modules).
+- [Steam Workshop Description](../steam-workshop-description.bbcode) — BBCode for the Workshop listing
+- [Steam Workshop Changelog](../steam-workshop-changelog.bbcode) — BBCode changelog for Workshop updates
+- [Project README](../../README.md#modules) — Full module reference
